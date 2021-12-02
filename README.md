@@ -1,5 +1,11 @@
 # Projet de C LP25
 
+## Qui fait quoi?
+	- Yann : parse et check query check.h, expand.h, display_table_record_list (dans record_list.h), sql.h, 
+	- Esteban : parse et check query
+	- POC : table.h, databse.h, query_exec.h,  record_list (majorité), table.h, utilis.h (références à faire dans le code)
+
+
 Le contexte du projet est une base de données gérée par votre programme. La base de données est constituée de plusieurs tables, chacune gérée par des fichiers portant le nom de la table gérée et une extension en fonction du rôle du fichier (structure, index, contenu). La base de données est dans un répertoire portant son nom, et chaque ensemble de fichiers d'une table est dans un sous-répertoire du même nom, contenu par le répertoire de la base de données elle-même.
 
 Le programme qui gère la base de données gère les arguments suivants :
