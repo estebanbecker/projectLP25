@@ -4,6 +4,8 @@
 
 #include "utils.h"
 
+#include <dirent.h>
+
 /*!
  *  \brief make_full_path concatenates path and basename and returns the result
  *  \param path the path to the database directory basename, can be NULL (i.e. path is current directory)
@@ -14,4 +16,13 @@
  */
 char *make_full_path(char *path, char *basename) {
     return NULL;
+}
+
+bool directory_exists(char *path) {
+    DIR *my_dir = opendir(path);
+    if (my_dir) {
+        closedir(my_dir);
+        return true;
+    }
+    return false;
 }

@@ -4,12 +4,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifndef _UTILS_H
 #define _UTILS_H
 
 #define TEXT_LENGTH 150
 #define MAX_FIELDS_COUNT 16
+
+#define MAX_TABLE_RECORD_SIZE TEXT_LENGTH*MAX_FIELDS_COUNT
 
 typedef enum {
     TYPE_UNKNOWN,
@@ -57,5 +60,6 @@ typedef struct {
 } filter_t;
 
 char *make_full_path(char *path, char *basename);
+bool directory_exists(char *path);
 
 #endif //_UTILS_H
