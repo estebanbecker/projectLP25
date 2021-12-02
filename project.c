@@ -5,8 +5,8 @@
 #include "utils.h"
 #include "database.h"
 #include "sql.h"
-#include "debug.h"
-#include "test.h"
+#include "table.h"
+#include "check.h"
 
 #define SQL_COMMAND_MAX_SIZE 1500
 

@@ -17,6 +17,15 @@ Pour vous permettre de mener à bien ce projet, vous devez comprendre comment le
 
 Des fichiers avec les définitions du code vous sont fournis avec ce README afin de garantir que la structure de votre programme est correcte.
 
+## Principe du programme
+
+Le programme que vous devez réaliser fournira sous une forme simplifiée les moyens d'interagir avec une base de données. L'interface de l'utilisateur avec la base de données étant faite avec une variante du langage SQL, vous serez amenés à implémenter les 4 étapes suivantes :
+
+- *Parse* : cette étape consiste à parcourir la requête SQL sous forme de texte, pour en extraire les différents éléments et les stocker dans une représentation en mémoire (sous forme de structures de données). Cette étape s'assure que la syntaxe de la requête est correcte.
+- *Check* : cette étape consiste à vérifier que la sémantique de la requête est correcte (tables et champs qui existent, types des données, etc.)
+- *Expand* : cette étape complète les éventuelles données manquantes dans la requête (par exemple : transformation du caractère `*` en l'ensemble des champs de la table, etc.)
+- *Execute* : la requête, maintenant analysée, vérifiée et complète, peut être exécutée. Il s'agit à cette étape de lire/écrire les données nécessaires sur le support de stockage contenant la base de données.
+
 ## Représentation de la base de données sur le support de stockage
 
 Pour les besoins de ce projet, nous considérons qu'une base de données est stockée dans un répertoire qui lui est propre et qui porte son nom, i.e. la base de données `inventaire` est stockée dans un répertoire nommé `"inventaire"`. Une base de données est constituée de tables, qui sont des ensembles structurés de données de même nature. Dans le répertoire de la base de données, chaque table dispose de son propre répertoire. Ce répertoire de table contient 3 ou 4 fichiers relatifs à cette table : le fichier de définition, le fichier d'index, le fichier de contenu et le cas échéant, le fichier de clé.
@@ -97,13 +106,19 @@ Cette commande ajoute à la table nommée `table_name` les valeurs `value1` à `
 
 La commande SQL utilisée est la suivante : `SELECT * FROM table_name WHERE condition;` ou `SELECT field1, ... fieldN FROM table_name [WHERE condition];`
 
+Cette commande affiche l'ensemble des champs des enregistrements de la table satisfaisant à la clause `WHERE`. Si cette dernière est absente, l'ensemble des enregistrements de la table sont affichés. Seuls les champs listés entre les mots-clé `SELECT` et `FROM` sont affichés. L'étoile `*` est un méta-caractère qui indique que l'on souhaite afficher tous les champs de la table.
+
 ### Suppression d'un enregistrement dans une table
 
 La commande SQL utilisée est la suivante : `DELETE FROM table_name [WHERE condition];`
 
+Cette commande supprime tous les enregistrements de la table correspondant à la clause `WHERE`. En l'absence de cette dernière, toute le contenu de la table est supprimé (mais pas la table elle-même).
+
 ### Modification d'un enregistrement dans une table
 
 La commande SQL utilisée est la suivante : `UPDATE table_name SET field1=value1, ..., fieldN=valueN [WHERE condition];`
+
+Cette commande affecte les nouvelles valeurs définies après `SET` à l'ensemble des enregistrements correspondant à la clause `WHERE`. En l'absence de cette dernière, tous les enregistrements sont modifiés.
 
 ### Clauses WHERE
 
@@ -195,11 +210,136 @@ Cette fonction parse une clause **where**, composée d'une liste d'au moins une 
 
 ## Vérification d'une requête avec la structure de la base de données
 
-Cette section sera renseignée prochainement.
+La vérification des paramètres de la requête dépend du type de requête.
+
+### Requête `SELECT`
+
+- la table existe
+- les champs de la liste de champs existent tous (voir la définition de la table)
+- la clause `WHERE` (si elle existe) correspond à des champs de la table et les valeurs recherchées sont convertibles au type du champ correspondant dans la définition de la table.
+
+### Requête `INSERT`
+
+La requête est valable si :
+
+- la table existe
+- les champs de la liste des champs à affecter (entre le nom de la table et le mot-clé `VALUES`) existent tous
+- le nombre de champs et de valeurs (seconde liste entre parenthèses après le mot-clé `VALUES`) est égal
+-  Les valeurs (dans leur ordre de listage) sont convertibles au type de leur champ, tel que défini dans la définition de table.
+
+### Requête `CREATE`
+
+La requête est valable si la table à créer n'existe pas, i.e. le répertoire de la table n'existe pas.
+
+### Requête `UPDATE`
+
+La requête est valable si :
+
+- la table existe
+- la clause `SET` (si elle existe) correspond à des champs de la table et les valeurs affectées sont convertibles au type du champ correspondant dans la définition de la table.
+- la clause `WHERE` (si elle existe) correspond à des champs de la table et les valeurs recherchées sont convertibles au type du champ correspondant dans la définition de la table.
+
+### Requête `DELETE`
+
+La requête est valable si :
+
+- la table existe
+- la clause `WHERE` (si elle existe) correspond à des champs de la table et les valeurs recherchées sont convertibles au type du champ correspondant dans la définition de la table.
+
+### Requête `DROP TABLE`
+
+La requête est valable si la table existe, i.e. si le répertoire de la table existe.
+
+### Requête `DROP DATABASE`
+
+La requête est valable si la base de données existe, i.e. si le répertoire de la base de données existe.
+
+### Fonctions nécessaires à la requête
+
+Les fonctions nécessaires sont les suivantes :
+
+```c
+bool check_query(query_result_t *query);
+
+bool check_query_select(update_or_select_query_t *query);
+bool check_query_update(update_or_select_query_t *query);
+bool check_query_create(create_query_t *query);
+bool check_query_insert(insert_query_t *query);
+bool check_query_delete(delete_query_t *query);
+bool check_query_drop_table(char *table_name);
+bool check_query_drop_db(char *db_name);
+
+bool check_fields_list(table_record_t *fields_list, table_definition_t *table_definition);
+bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition);
+
+field_definition_t *find_field_definition(char *field_name, table_definition_t *table_definition);
+bool is_value_valid(field_record_t *value, field_definition_t *field_definition);
+bool is_int(char *value);
+bool is_float(char *value);
+bool is_key(char *value);
+```
+
+Leur fonctionnement est donné en commentaires doxygen dans le fichier `check.c` envoyé avec cette partie du sujet.
+
+## Expansion de la requête
+
+L'expansion de la requête est nécessaire pour les requêtes dont les champs peuvent être définis incomplètement. Il s'agit des requêtes `INSERT` et `SELECT`. En effet, insert peut spécifier seulement une partie des champs à affecter, les autres étant créés avec des valeurs par défaut. Concernant la requête `SELECT`, la liste de champs à afficher peut être un sous ensemble des champs de la table (il n'y a dans ce cas rien à étendre) ou le mot-clé `*` qui signifie "tous les champs". Dans ce dernier cas, la liste de champs du `SELECT` doit être remplacée par la liste des champs de la définition de la table cible.
+
+Les fonctions à définir sont les suivantes :
+
+```c
+void expand(query_result_t *query);
+
+void expand_select(update_or_select_query_t *query);
+void expand_insert(insert_query_t *query);
+
+bool is_field_in_record(table_record_t *record, char *field_name);
+void make_default_value(field_record_t *field, char *table_name);
+```
+
+`expand` est la fonction racine qui appellera une des deux fonctions spécialisées. `expand_insert` va vérifier si la liste de champs est une `*`. Dans ce cas, elle va remplacer cette liste par la liste nominative des champs définis pour la table cible.
+
+`expand_insert` va parcourir la définition de la table cible et chercher les champs de la table non définis par la requête. Quand un champ est trouvé, il est ajouté à la requête avec la valeur par défaut (0 pour les valeurs numériques, chaîne vide pour le texte et identifiant suivant pour les types `primary key`).
+
+`is_field_in_record` teste si un champ dont le nom est `field_name` existe dans l'enregistrement de table de la requête. Elle renvoie `true` si c'est le cas, `false` sinon.
+
+`make_default_value` affecte la valeur par défaut à un champ en se basant sur son type.
 
 ## Exécution de la requête
 
-Cette section sera renseignée prochainement.
+L'exécution de la requête consiste à appliquer la requête au contenu de la base de données stockée sur la machine. Pour celà, un certain nombre de fonctions sont nécessaires.
+
+Tout d'abord, les fichiers `query_exec.[hc]` fournissent les fonctions nécessaires à l'exécution des requêtes.
+
+```c
+void execute(query_result_t *query);
+
+void execute_create(create_query_t *query);
+void execute_insert(insert_query_t *query);
+void execute_select(update_or_select_query_t *query);
+void execute_update(update_or_select_query_t *query);
+void execute_delete(delete_query_t *query);
+void execute_drop_table(char *table_name);
+void execute_drop_database(char *db_name);
+```
+
+Comme aux étapes précédentes, la requête est d'abord passée à la fonction globale `execute` qui va se baser sur le champ `query_type` pour appeler une des fonctions dédiées à la requête à exécuter. Les fonctions spécialisées vont soit écrire dans les fichiers de la base de données (`execute_create`, `execute_insert`, `execute_delete`, `execute_update`), soit lire et afficher les données des fichiers de tables (`execute_select`), soit effacer des fichiers de tables (`execute_drop_table`) voire toute une base de données (`execute_drop_database`). L'ensemble de ces fonctions s'appuient sur de nouvelles fonctions dans les fichiers déjà créés.
+
+### Table
+
+Toutes les fonctions nécessaires à la manipulation des données sont commentées pour vous permettre de les implémenter.
+
+### Database
+
+Il est nécessaire d'implémenter la fonction `recursive_rmdir` qui sera utilisée pour supprimer le répertoire de la base de données ainsi que les répertoires et fichiers des tables qu'elle contient.
+
+### Record_list
+
+Ce fichier est nouveau et permet de gérer une liste chaînée de résultats de requête pour la requête `SELECT`. Le code pour les listes vous est fourni pour simplifier votre travail. Vous devez implémenter les fonctions permettant de parcourir et afficher une liste de résultats avec colonnes alignées. Les fonctions à implémenter peuvent s'appuyer sur d'autres fonctions si ça permet de simplifier le développement. Ces nouvelles fonctions devront être documentées en entête avec des commentaires *doxygen* similaires à ceux du sujet, ainsi que commentées dans la définition si nécessaire.
+
+### Remarques
+
+Des modifications mineures ont été poussées sur les fichiers `utils.h` et `sql.h`.
 
 # Annexes
 
@@ -410,3 +550,75 @@ typedef struct {
 ```
 
 Le type `query_result_t` est renvoyé par toutes les fonctions de parsing de haut niveau. Il comporte un champ indiquant le type de requête, puis une union à laquelle on accédera en fonction de la valeur du champ `query_type`. Chaque membre de l'union définit les éléments nécessaires pour effectuer la requête, notamment la table ou la base de données cible, les champs affectés et leurs valeurs, ainsi que l'éventuelle clause where.
+
+## Fonctions internes de la base de données
+
+Les fonctions décrites dans cette section sont utilisées par la base de données pour accéder au contenu de la base, le lire, ou en ajouter. Elles reposent sur les résultats des conversion depuis le SQL vers les structures internes.
+
+### Création et suppression de BDD
+
+Trois fonctions sont nécessaires à la manipulation globale de la base de données :
+
+ - `bool directory_exists(char *path)` qui cherche si le répertoire de chemin `path` existe. Cette fonction renvoie `true` si le répertoire existe, `false` sinon.
+ - `void create_db_directory(char *name)` qui crée le répertoire de la base de données (il faut que cette dernière n'existe pas encore, d'où la fonction précédente)
+- `void recursive_rmdir(char *dirname)` qui permet de supprimer récursivement un répertoire dont le chemin est `dirname`.
+
+Il est également nécessaire que votre programme stocke dans une variable le nom de la base de données en cours d'utilisation (option `-d`), ainsi que son chemin (option `-l`).
+
+### Création et suppression d'une table
+
+La création d'une table, puis son utilisation, repose sur la structure `s_field_definition`. Comme pour la BDD, vous devrez d'abord créer les 3 fonctions de base pour gérer l'existence de la table.
+
+ - `int table_exists(char *table_name)` qui renvoie 1 si la table `table_name` existe déjà, 0 sinon
+ - `void drop_table(char *table_name)`
+ - `void create_table(char *table_name, s_field_definition fields[], int fields_count)` qui crée la table
+
+La création de la table est un processus de plusieurs étapes (si elle n'existe pas encore) :
+
+- Création du répertoire nommé comme la variable  `table_name`
+- Dans ce répertoire, création des fichiers suivants :
+	 - `table_name.idx`, fichier d'index
+	 - `table_name.def`, fichier de définition de table
+	 - `table_name.data`, fichier de contenu de la table
+	 - le cas échéant, un fichier `table_name.key` pour la clé primaire (il ne peut y en avoir qu'une par table)
+- Écriture du contenu de la table `table_name.def`
+
+Par la suite, il vous sera nécessaire de comparer les arguments d'une commande SQL avec la structure de la base de données. Ce sera le rôle de la fonction `get_table_definition`.
+
+### Écriture dans une table
+
+Écrire dans une table se fait dans le cas des requêtes `INSERT` et `UPDATE`. Ajouter ou modifier un enregistrement d'une table se fait par la procédure suivante :
+
+- Construire le buffer binaire qui sera écrit dans le fichier de données
+- Chercher un index et un emplacement libres dans le fichier d'index et le fichier de contenu. Ce choix s'appuie sur l'une des deux conditions suivantes :
+	- Toutes les conditions ci dessous sont vraies :
+		- L'index courant est inactif
+		- L'enregistrement pointé a une taille supérieure ou égale à celle du buffer construit à la première étape
+	- À défaut, un nouvel index et un nouveau contenu sont créés en fins de fichiers d'index et de contenu.
+
+Les fonctions requises pour réaliser cette tâche sont les suivantes :
+ - `add_row_to_table` 
+ - `format_row`
+ - `compute_record_length`
+ - `find_first_free_record`
+ Ainsi qu'éventuellement :
+ - `get_next_key`
+ - `update_key`
+
+## Lecture dans une table
+
+Pour la lecture dans une table, vous devez utiliser la structure écrite dans le fichier .def, l'index dans le fichier .idx qui vous permettront ensuite d'accéder et de récupérer correctement les données de la table dans le fichier .data.
+
+Pour cela, vous aurez besoin des fonctions suivantes :
+
+ - `open_definition_file`
+ - `open_index_file`
+ - `open_content_file`
+ - `get_table_definition`
+ - `compute_record_length`
+ - `get_filtered_records`
+ - `get_table_record`
+ - `is_matching_filter`
+ - `find_field_in_table_record`
+ - `display_table_record_list`
+
