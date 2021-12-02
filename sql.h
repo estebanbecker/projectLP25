@@ -28,10 +28,11 @@ typedef struct {
 typedef struct {
     char table_name[TEXT_LENGTH];
     filter_t where_clause;
-} drop_query_t;
+} delete_query_t;
 
 typedef struct {
     char table_name[TEXT_LENGTH];
+    table_record_t fields_names;
     table_record_t fields_values;
 } insert_query_t;
 
@@ -47,7 +48,7 @@ typedef struct {
         char table_name[TEXT_LENGTH];
         char database_name[TEXT_LENGTH];
         create_query_t create_query;
-        drop_query_t drop_query;
+        delete_query_t delete_query;
         insert_query_t insert_query;
         update_or_select_query_t update_query;
         update_or_select_query_t select_query;
