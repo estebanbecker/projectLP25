@@ -34,7 +34,7 @@ unsigned long long get_next_key(char *table_name);
 
 field_record_t *find_field_in_table_record(char *field_name, table_record_t *record);
 bool is_matching_filter(table_record_t *record, filter_t *filter);
-record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result);
+//record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result);
 table_record_t *get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result);
 
 #endif //_TABLE_H
