@@ -4,7 +4,6 @@
 
 #include "sql.h"
 
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
