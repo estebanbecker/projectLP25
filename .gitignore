@@ -2,3 +2,4 @@ database.o
 sql.o
 utils.o
 .vscode/settings.json
+project
