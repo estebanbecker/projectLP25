@@ -96,19 +96,46 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
     return sql;
 }
 
-
+/**
+ * @brief function that extract an equality condition from a sql query.
+ * 
+ * @param sql Pointer to a position in the sql query.
+ * @param equality Pointer to the equality condition structure to modificate.
+ * @return char* Pointer to the position in the query after the equality condition.
+ */
 char *parse_equality(char *sql, field_record_t *equality) {
     return sql;
 }
 
+/**
+ * @brief extract a condition set from a sql query wich is a list of equality conditions.
+ * 
+ * @param sql Pointer to a position in the sql query.
+ * @param result Pointer to the condition structure to modificate.
+ * @return char* Pointer to the position in the query after the condition.
+ */
 char *parse_set_clause(char *sql, table_record_t *result) {
     return sql;
 }
 
+/**
+ * @brief exract a condition where from a sql query wich is a list of equality conditions.
+ * 
+ * @param sql Pointer to a position in the sql query.
+ * @param filter Pointer to the condition structure to modificate.
+ * @return char* Pointer to the position in the query after the condition.
+ */
 char *parse_where_clause(char *sql, filter_t *filter) {
     return sql;
 }
 
+/**
+ * @brief fuction that extract the data from a sql query.
+ * 
+ * @param sql Pointer to the sql query.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t*  Return the result of the query.
+ */
 query_result_t *parse(char *sql, query_result_t *result) {
     return NULL;
 }
