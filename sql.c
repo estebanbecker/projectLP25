@@ -134,36 +134,85 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  * 
  * @param sql Pointer to the sql query.
  * @param result Pointer to the data structure to modificate.
- * @return query_result_t*  Return the result of the query.
+ * @return query_result_t*  Return the data of the query
  */
 query_result_t *parse(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql select query.
+ * 
+ * @param sql Pointer to the sql select query without SELECT.
+ * @param result Point to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_select(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql create query.
+ * 
+ * @param sql Pointer to the sql create query without CREATE.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_create(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql insert query.
+ * 
+ * @param sql Pointer to the sql insert query without INSERT.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_insert(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql update query.
+ * 
+ * @param sql Pointer to the sql update query without UPDATE.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_update(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql delete query.
+ * 
+ * @param sql Pointer to the sql delete query without DELETE.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_delete(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql drop query.
+ * 
+ * @param sql Pointer to the sql drop query without DROP.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_drop_db(char *sql, query_result_t *result) {
     return NULL;
 }
 
+/**
+ * @brief function that extract the data from a sql drop table query.
+ * 
+ * @param sql Pointer to the sql drop table query without DROP TABLE.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t* Return the data of the query
+ */
 query_result_t *parse_drop_table(char *sql, query_result_t *result) {
     return NULL;
 }
