@@ -13,6 +13,8 @@
 int main(int argc, char *argv[]) {
 
     // Here: check parameters with getopt
+    // -d database_name
+    // -l directory of the parent database folder (default: current directory)
 
     char buffer[SQL_COMMAND_MAX_SIZE];
     do {
