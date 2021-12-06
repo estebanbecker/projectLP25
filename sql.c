@@ -129,6 +129,13 @@ char *parse_where_clause(char *sql, filter_t *filter) {
     return sql;
 }
 
+/**
+ * @brief fuction that extract the data from a sql query.
+ * 
+ * @param sql Pointer to the sql query.
+ * @param result Pointer to the data structure to modificate.
+ * @return query_result_t*  Return the result of the query.
+ */
 query_result_t *parse(char *sql, query_result_t *result) {
     return NULL;
 }
