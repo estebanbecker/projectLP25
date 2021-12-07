@@ -55,6 +55,22 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @param table_definition a pointer to the definition of the new table
  */
 void create_table(create_query_t *table_definition) {
+
+    struct stat st = {0};
+
+    //check if folder exsits
+    if (stat(table_definition->table_name, &st) != -1){
+        printf("the table already exists!\n");
+        return NULL;
+    }  
+
+    mkdir(table_definition->table_name, 0777);
+    FILE *definition = fopen("defenition", "w");
+    FILE *index = fopen("index", "w");
+    FILE *contenu = fopen("contenu", "w");
+
+    fprintf(definition, table_definition->table_definition.definitions);
+    
 }
 
 /*!
