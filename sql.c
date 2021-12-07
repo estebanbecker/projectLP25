@@ -14,8 +14,12 @@
  * 
  * @param sql Pointer to a position in the sql query.
  * @return char* Return the pointer to the first occurrence of a non space character.
+ * @author @estebanbecker
  */
 char *get_sep_space(char *sql) {
+    while(isspace(*sql)) {
+        sql++;
+    }
     return sql;
 }
 
@@ -29,8 +33,20 @@ char *get_sep_space(char *sql) {
  * @param sql Pointer to a position in the sql query.
  * @param c Character to skip
  * @return char* Pointer to the position in the query after the character.
+ * @author @estebanbecker
  */
 char *get_sep_space_and_char(char *sql, char c) {
+    while(isspace(*sql)) {
+        sql++;
+    }
+    if(*sql == c) {
+        sql++;
+    }else{
+        return NULL;
+    }
+    while(isspace(*sql)) {
+        sql++;
+    }
     return sql;
 }
 
@@ -42,22 +58,57 @@ char *get_sep_space_and_char(char *sql, char c) {
  * @param sql Pointer to a position in the sql query.
  * @param keyword Keyword to check.
  * @return char* Pointer to the position in the query after the keyword.
+ * @author @estebanbecker
  */
 char *get_keyword(char *sql, char *keyword) {
-    return sql;
+    int valid = 1;
+    while(valid && *keyword != '\0') {
+        if(tolower(*sql) != tolower(*keyword)) {
+            valid = 0;
+        }
+        sql++;
+        keyword++;
+    }
+
+    if(valid) {
+        return sql;
+    }else{
+        return NULL;
+    }
 }
 
 /**
- * @brief Get the field name object. Work with 
+ * @brief Get the field name object.
  * @example "'my name is' text)" -> " text" and field_name = "my name is"
  * @example "my name is text)" -> " name is text" and field_name = "my"
  * 
  * @param sql Pointer to a position in the sql query.
  * @param field_name Point to the field name to remplace.
  * @return char* Pointer to the position in the query after the field name.
+ * @author @estebanbecker
  */
 char *get_field_name(char *sql, char *field_name) {
-    return sql;
+    int i = 0;
+
+    if(*sql== '\'') {
+        i++;
+        sql++;
+        while(*sql != '\'') {
+            field_name[i-1] = sql[i];
+            i++;
+            sql++;
+        }
+        field_name[i-1] = '\0';
+        return sql++;
+    }else{
+        while(!isspace(*sql)) {
+            field_name[i] = *sql;
+            i++;
+            sql++;
+        }
+        field_name[i] = '\0';
+        return sql;
+    }
 }
 
 /**
@@ -66,14 +117,22 @@ char *get_field_name(char *sql, char *field_name) {
  * @param sql Pointer to a position in the sql query.
  * @return true If it is the end of the query.
  * @return false If it is not the end of the query.
+ * @author @estebanbecker
  */
 bool has_reached_sql_end(char *sql) {
-    return false;
+    while (*sql == ' ') {
+        sql++;
+    }
+    if (*sql == '\0' || *sql == ';') {
+        return true;
+    }else{
+        return false;
+    }
 }
 
 /**
  * @brief Get a list of value or fiels names.
- * @example "id, name, age WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_TEXT,"id" result->fields[1] = TYPE_TEXT,"name" result->fields[2] = TYPE_TEXT,"age"
+ * @example " id, name, age WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_TEXT,"id" result->fields[1] = TYPE_TEXT,"name" result->fields[2] = TYPE_TEXT,"age"
  * @example "12, Hey, 2.5 WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_INTEGER,"12" result->fields[1] = TYPE_TEXT,"Hey" result->fields[2] = TYPE_FLOAT,"2.5"
  * 
  * @param sql Pointer to a position in the sql query.
@@ -81,7 +140,22 @@ bool has_reached_sql_end(char *sql) {
  * @return char* Pointer to the position in the query after the list of values or fields names.
  */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    return sql;
+    char *cursor = get_sep_space(sql);
+    char field[TEXT_LENGTH];
+    bool continue_parsing = true;
+
+    while (continue_parsing)
+    {
+        if(has_reached_sql_end(cursor)) {
+            continue_parsing = false;
+        }else if(get_keyword(cursor, "where") != NULL) {
+            continue_parsing = false;
+        }
+    }
+    
+    //TO COMPLETE
+    
+
 }
 
 /**
@@ -93,6 +167,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
  * @return char* Pointer to the position in the query after the table definition.
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
+    
     return sql;
 }
 
