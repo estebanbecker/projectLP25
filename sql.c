@@ -48,7 +48,7 @@ char *get_keyword(char *sql, char *keyword) {
 }
 
 /**
- * @brief Get the field name object. Work with 
+ * @brief Get the field name object.
  * @example "'my name is' text)" -> " text" and field_name = "my name is"
  * @example "my name is text)" -> " name is text" and field_name = "my"
  * 
@@ -66,9 +66,18 @@ char *get_field_name(char *sql, char *field_name) {
  * @param sql Pointer to a position in the sql query.
  * @return true If it is the end of the query.
  * @return false If it is not the end of the query.
+ * @author @estebanbecker
  */
 bool has_reached_sql_end(char *sql) {
-    return false;
+    int i = 0;
+    while (sql[i] == ' ') {
+        i++;
+    }
+    if (sql[i] == '\0') {
+        return true;
+    }else{
+        return false;
+    }
 }
 
 /**
