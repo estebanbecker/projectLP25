@@ -14,9 +14,14 @@
  * 
  * @param sql Pointer to a position in the sql query.
  * @return char* Return the pointer to the first occurrence of a non space character.
+ * @author @estebanbecker
  */
 char *get_sep_space(char *sql) {
-    return sql;
+    int i = 0;
+    while(isspace(sql[i])) {
+        i++;
+    }
+    return &sql[i];
 }
 
 /**
@@ -29,9 +34,22 @@ char *get_sep_space(char *sql) {
  * @param sql Pointer to a position in the sql query.
  * @param c Character to skip
  * @return char* Pointer to the position in the query after the character.
+ * @author @estebanbecker
  */
 char *get_sep_space_and_char(char *sql, char c) {
-    return sql;
+    int i = 0;
+    while(isspace(sql[i])) {
+        i++;
+    }
+    if(sql[i] == c) {
+        i++;
+    }else{
+        return NULL;
+    }
+    while(isspace(sql[i])) {
+        i++;
+    }
+    return &sql[i];
 }
 
 /**
@@ -42,9 +60,22 @@ char *get_sep_space_and_char(char *sql, char c) {
  * @param sql Pointer to a position in the sql query.
  * @param keyword Keyword to check.
  * @return char* Pointer to the position in the query after the keyword.
+ * @author @estebanbecker
  */
 char *get_keyword(char *sql, char *keyword) {
-    return sql;
+    int i = 0, valid = 1;
+    while(valid && keyword[i] != '\0') {
+        if(tolower(sql[i]) != tolower(keyword[i])) {
+            valid = 0;
+        }
+        i++;
+    }
+
+    if(valid) {
+        return &sql[i];
+    }else{
+        return NULL;
+    }
 }
 
 /**
@@ -73,7 +104,7 @@ bool has_reached_sql_end(char *sql) {
     while (sql[i] == ' ') {
         i++;
     }
-    if (sql[i] == '\0') {
+    if (sql[i] == '\0' || sql[i] == ';') {
         return true;
     }else{
         return false;
