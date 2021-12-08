@@ -86,9 +86,27 @@ char *get_keyword(char *sql, char *keyword) {
  * @param sql Pointer to a position in the sql query.
  * @param field_name Point to the field name to remplace.
  * @return char* Pointer to the position in the query after the field name.
+ * @author @estebanbecker
  */
 char *get_field_name(char *sql, char *field_name) {
-    return sql;
+    int i = 0;
+
+    if(sql[0]== '\'') {
+        i++;
+        while(sql[i] != '\'') {
+            field_name[i-1] = sql[i];
+            i++;
+        }
+        field_name[i-1] = '\0';
+        return &sql[i+1];
+    }else{
+        while(!isspace(sql[i])) {
+            field_name[i] = sql[i];
+            i++;
+        }
+        field_name[i] = '\0';
+        return &sql[i];
+    }
 }
 
 /**
