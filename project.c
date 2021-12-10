@@ -12,13 +12,7 @@
 
 int main(int argc, char *argv[]) {
 
-    // Here: check parameters with getopt
-    if (directory_exists("random")){
-        printf("folder exist\n");
-    }else{
-        printf("folder does not exist");
-    }
-    
+    // Here: check parameters with getopt    
     char buffer[SQL_COMMAND_MAX_SIZE];
     do {
         printf("> ");
