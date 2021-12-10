@@ -3,3 +3,8 @@ sql.o
 utils.o
 .vscode/settings.json
 project
+check.o
+expand.o
+record_list.o
+query_exec.o
+table.o
