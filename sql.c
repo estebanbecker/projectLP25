@@ -17,11 +17,10 @@
  * @author @estebanbecker
  */
 char *get_sep_space(char *sql) {
-    int i = 0;
-    while(isspace(sql[i])) {
-        i++;
+    while(isspace(*sql)) {
+        sql++;
     }
-    return &sql[i];
+    return sql;
 }
 
 /**
@@ -37,19 +36,18 @@ char *get_sep_space(char *sql) {
  * @author @estebanbecker
  */
 char *get_sep_space_and_char(char *sql, char c) {
-    int i = 0;
-    while(isspace(sql[i])) {
-        i++;
+    while(isspace(*sql)) {
+        sql++;
     }
-    if(sql[i] == c) {
-        i++;
+    if(*sql == c) {
+        sql++;
     }else{
         return NULL;
     }
-    while(isspace(sql[i])) {
-        i++;
+    while(isspace(*sql)) {
+        sql++;
     }
-    return &sql[i];
+    return sql;
 }
 
 /**
@@ -63,16 +61,17 @@ char *get_sep_space_and_char(char *sql, char c) {
  * @author @estebanbecker
  */
 char *get_keyword(char *sql, char *keyword) {
-    int i = 0, valid = 1;
-    while(valid && keyword[i] != '\0') {
-        if(tolower(sql[i]) != tolower(keyword[i])) {
+    int valid = 1;
+    while(valid && *keyword != '\0') {
+        if(tolower(*sql) != tolower(*keyword)) {
             valid = 0;
         }
-        i++;
+        sql++;
+        keyword++;
     }
 
     if(valid) {
-        return &sql[i];
+        return sql;
     }else{
         return NULL;
     }
@@ -91,21 +90,24 @@ char *get_keyword(char *sql, char *keyword) {
 char *get_field_name(char *sql, char *field_name) {
     int i = 0;
 
-    if(sql[0]== '\'') {
+    if(*sql== '\'') {
         i++;
-        while(sql[i] != '\'') {
+        sql++;
+        while(*sql != '\'') {
             field_name[i-1] = sql[i];
             i++;
+            sql++;
         }
         field_name[i-1] = '\0';
-        return &sql[i+1];
+        return sql++;
     }else{
-        while(!isspace(sql[i])) {
-            field_name[i] = sql[i];
+        while(!isspace(*sql)) {
+            field_name[i] = *sql;
             i++;
+            sql++;
         }
         field_name[i] = '\0';
-        return &sql[i];
+        return sql;
     }
 }
 
@@ -118,11 +120,10 @@ char *get_field_name(char *sql, char *field_name) {
  * @author @estebanbecker
  */
 bool has_reached_sql_end(char *sql) {
-    int i = 0;
-    while (sql[i] == ' ') {
-        i++;
+    while (*sql == ' ') {
+        sql++;
     }
-    if (sql[i] == '\0' || sql[i] == ';') {
+    if (*sql == '\0' || *sql == ';') {
         return true;
     }else{
         return false;
@@ -131,7 +132,7 @@ bool has_reached_sql_end(char *sql) {
 
 /**
  * @brief Get a list of value or fiels names.
- * @example "id, name, age WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_TEXT,"id" result->fields[1] = TYPE_TEXT,"name" result->fields[2] = TYPE_TEXT,"age"
+ * @example " id, name, age WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_TEXT,"id" result->fields[1] = TYPE_TEXT,"name" result->fields[2] = TYPE_TEXT,"age"
  * @example "12, Hey, 2.5 WHERE id=2;" -> "WHERE id=2;" and result->fields_count = 3 result->fields[0] = TYPE_INTEGER,"12" result->fields[1] = TYPE_TEXT,"Hey" result->fields[2] = TYPE_FLOAT,"2.5"
  * 
  * @param sql Pointer to a position in the sql query.
@@ -139,7 +140,22 @@ bool has_reached_sql_end(char *sql) {
  * @return char* Pointer to the position in the query after the list of values or fields names.
  */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    return sql;
+    char *cursor = get_sep_space(sql);
+    char field[TEXT_LENGTH];
+    bool continue_parsing = true;
+
+    while (continue_parsing)
+    {
+        if(has_reached_sql_end(cursor)) {
+            continue_parsing = false;
+        }else if(get_keyword(cursor, "where") != NULL) {
+            continue_parsing = false;
+        }
+    }
+    
+    //TO COMPLETE
+    
+
 }
 
 /**
@@ -151,6 +167,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
  * @return char* Pointer to the position in the query after the table definition.
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
+    
     return sql;
 }
 
