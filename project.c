@@ -13,14 +13,12 @@
 int main(int argc, char *argv[]) {
 
     // Here: check parameters with getopt
-    // -d database_name
-    // -l directory of the parent database folder (default: current directory)
-
-    char text[150] = "test";
-    create_query_t *test = NULL;
-    strcpy(test->table_name, text);
-    create_table(test);
-
+    if (directory_exists("random")){
+        printf("folder exist\n");
+    }else{
+        printf("folder does not exist");
+    }
+    
     char buffer[SQL_COMMAND_MAX_SIZE];
     do {
         printf("> ");
