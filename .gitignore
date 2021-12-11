@@ -8,3 +8,7 @@ expand.o
 record_list.o
 query_exec.o
 table.o
+.idea/
+.vscode/
+CMakeLists.txt
+cmake-build-debug/

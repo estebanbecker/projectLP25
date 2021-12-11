@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 
 /*!
  * @brief function open_definition_file opens the table key file
@@ -58,18 +59,15 @@ void create_table(create_query_t *table_definition) {
     if (!directory_exists(table_definition->table_name)){
         mkdir(table_definition->table_name, S_IRWXU);
 
-        int key_index = -1;
+        int key_needed = false;
         char path_file_extension[TEXT_LENGTH];
         char path_file[TEXT_LENGTH];
 
         //path to folder
-        strcpy(path_file, table_definition->table_name);
-        strcat(path_file, "/");
-        strcat(path_file, table_definition->table_name);
+        sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_definition);
 
         //creation of table_name/table_name.def
-        strcpy(path_file_extension, path_file);
-        strcat(path_file_extension, ".def");
+        sprintf(path_file_extension, "%s.def",path_file);
         FILE *def = fopen(path_file_extension, "a");
         for (int field = 0; field < table_definition->table_definition.fields_count; ++field) {
             fprintf(def, "%u %s", table_definition->table_definition.definitions[field].column_type,
@@ -77,31 +75,26 @@ void create_table(create_query_t *table_definition) {
 
             //is creation of key table_name/table needed
             if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
-                key_index = field;
+                key_needed = true;
             }
         }
         fclose(def);
 
         //creation of table_name/table_name.idx
-        strcpy(path_file_extension, path_file);
-        strcat(path_file_extension, ".idx");
-
+        sprintf(path_file_extension, "%s.idx", path_file);
 
         FILE *idx = fopen(path_file_extension, "a");
         fclose(idx);
 
         //creation of table_name/table_name.data
-        strcpy(path_file_extension, path_file);
-        strcat(path_file_extension, ".data");
-
+        sprintf(path_file_extension, "%s.data", path_file);
 
         FILE *data = fopen(path_file_extension, "a");
         fclose(data);
 
         //creation of table_name/table_name.key if needed
-        if (key_index > -1) {
-            strcpy(path_file_extension, path_file);
-            strcat(path_file_extension, ".key");
+        if (key_needed) {
+            sprintf(path_file_extension, "%s.key", path_file);
 
             FILE *key = fopen(path_file_extension, "a");
             fprintf(data, "%d", 1);
@@ -117,6 +110,20 @@ void create_table(create_query_t *table_definition) {
  * @param table_name the name of the dropped table.
  */
 void drop_table(char *table_name) {
+    DIR *const directory = opendir(table_name);
+    if (directory) {
+        struct dirent *entry;
+        while ((entry = readdir(directory))) {
+            if (!strcmp(".", entry->d_name) || !strcmp("..", entry->d_name)) {
+                continue;
+            }
+            char filename[strlen(table_name) + strlen(entry->d_name) + 2];
+            sprintf(filename, "%s/%s", table_name, entry->d_name);
+            remove(filename);
+        }
+        closedir(directory);
+        rmdir(table_name);
+    }
 }
 
 /*!
