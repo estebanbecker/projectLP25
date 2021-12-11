@@ -55,6 +55,16 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @param table_definition a pointer to the definition of the new table
  */
 void create_table(create_query_t *table_definition) {
+
+    struct stat st = {0};
+
+    //check if folder exsits
+    if (stat(table_definition->table_name, &st) != -1){
+        printf("the table already exists!\n");
+    }else {
+
+        mkdir(table_definition->table_name, S_IRWXU);
+    }
 }
 
 /*!
@@ -71,6 +81,7 @@ void drop_table(char *table_name) {
  * @return the pointer to result, NULL if the function failed
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
+
     return NULL;
 }
 
@@ -82,7 +93,7 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
  * @return the value of the record length.
  */
 uint16_t compute_record_length(table_definition_t *definition) {
-    uint16_t length = 0;
+        uint16_t length = 0;
     return length;
 }
 
