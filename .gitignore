@@ -8,7 +8,5 @@ expand.o
 record_list.o
 query_exec.o
 table.o
-package-lock.json
-package.json
-.vscode/launch.json
 .vscode/tasks.json
+.vscode/launch.json
