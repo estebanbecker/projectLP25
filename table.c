@@ -15,6 +15,12 @@
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_definition_file(char *table_name, char *mode) {
+    char file_path[TEXT_LENGTH];
+    sprintf(file_path, "%s/%s.def", table_name, table_name);
+    FILE *file = fopen(file_path, mode);
+    if (file){
+        return file;
+    }
     return NULL;
 }
 
@@ -25,6 +31,12 @@ FILE *open_definition_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_index_file(char *table_name, char *mode) {
+    char file_path[TEXT_LENGTH];
+    sprintf(file_path, "%s/%s.idx", table_name, table_name);
+    FILE *file = fopen(file_path, mode);
+    if (file){
+        return file;
+    }
     return NULL;
 }
 
@@ -35,6 +47,12 @@ FILE *open_index_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_content_file(char *table_name, char *mode) {
+    char file_path[TEXT_LENGTH];
+    sprintf(file_path, "%s/%s.data", table_name, table_name);
+    FILE *file = fopen(file_path, mode);
+    if (file){
+        return file;
+    }
     return NULL;
 }
 
@@ -45,6 +63,12 @@ FILE *open_content_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_key_file(char *table_name, char *mode) {
+    char file_path[TEXT_LENGTH];
+    sprintf(file_path, "%s/%s.key", table_name, table_name);
+    FILE *file = fopen(file_path, mode);
+    if (file){
+        return file;
+    }
     return NULL;
 }
 
