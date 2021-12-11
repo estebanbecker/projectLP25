@@ -55,15 +55,60 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @param table_definition a pointer to the definition of the new table
  */
 void create_table(create_query_t *table_definition) {
-
-    struct stat st = {0};
-
-    //check if folder exsits
-    if (stat(table_definition->table_name, &st) != -1){
-        printf("the table already exists!\n");
-    }else {
-
+    if (!directory_exists(table_definition->table_name)){
         mkdir(table_definition->table_name, S_IRWXU);
+
+        int key_index = -1;
+        char path_file_extension[TEXT_LENGTH];
+        char path_file[TEXT_LENGTH];
+
+        //path to folder
+        strcpy(path_file, table_definition->table_name);
+        strcat(path_file, "/");
+        strcat(path_file, table_definition->table_name);
+
+        //creation of table_name/table_name.def
+        strcpy(path_file_extension, path_file);
+        strcat(path_file_extension, ".def");
+        FILE *def = fopen(path_file_extension, "a");
+        for (int field = 0; field < table_definition->table_definition.fields_count; ++field) {
+            fprintf(def, "%u %s", table_definition->table_definition.definitions[field].column_type,
+                    table_definition->table_definition.definitions[field].column_name);
+
+            //is creation of key table_name/table needed
+            if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
+                key_index = field;
+            }
+        }
+        fclose(def);
+
+        //creation of table_name/table_name.idx
+        strcpy(path_file_extension, path_file);
+        strcat(path_file_extension, ".idx");
+
+
+        FILE *idx = fopen(path_file_extension, "a");
+        fclose(idx);
+
+        //creation of table_name/table_name.data
+        strcpy(path_file_extension, path_file);
+        strcat(path_file_extension, ".data");
+
+
+        FILE *data = fopen(path_file_extension, "a");
+        fclose(data);
+
+        //creation of table_name/table_name.key if needed
+        if (key_index > -1) {
+            strcpy(path_file_extension, path_file);
+            strcat(path_file_extension, ".key");
+
+            FILE *key = fopen(path_file_extension, "a");
+            fprintf(data, "%d", 1);
+            fclose(key);
+        }
+    }else {
+        printf("table already exists \n");
     }
 }
 
