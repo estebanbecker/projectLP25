@@ -172,12 +172,14 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  */
 
 bool is_int(char *field) {
-    int i = 0;
-    while (field[i] != '\0') {
-        if (!isdigit(field[i])) {
+    if(*field == '-') {
+        field++;
+    }
+    while (*field != '\0') {
+        if (!isdigit(*field)) {
             return false;
         }
-        i++;
+        field++;
     }
     return true;
 }
@@ -192,19 +194,18 @@ bool is_int(char *field) {
  * @author @estebanbecker
  */
 bool is_float(char *field) {
-    int i = 0;
     bool is_dot = false;
-    while (field[i] != '\0') {
-        if (!isdigit(field[i]) && field[i] != '.' ) {
+    while (*field != '\0') {
+        if (!isdigit(*field) && *field != '.' ) {
             return false;
         }
-        if (field[i] == '.') {
+        if (*field == '.') {
             if (is_dot) {
                 return false;
             }
             is_dot = true;
         }
-        i++;
+    field++;
     }
     return true;
 }
@@ -216,5 +217,11 @@ bool is_float(char *field) {
  * @return true if value can be converted into a key, false if it cannot
  */
 bool is_key(char *value) {
-    return false;
+    while (*value != '\0') {
+        if (!isdigit(*value)) {
+            return false;
+        }
+        value++;
+    }
+    return true;
 }
