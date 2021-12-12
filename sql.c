@@ -94,14 +94,14 @@ char *get_field_name(char *sql, char *field_name) {
         i++;
         sql++;
         while(*sql != '\'') {
-            field_name[i-1] = sql[i];
+            field_name[i-1] = *sql;
             i++;
             sql++;
         }
         field_name[i-1] = '\0';
-        return sql++;
+        return ++sql;
     }else{
-        while(!isspace(*sql)) {
+        while(!isspace(*sql) && *sql != ',' && *sql != ';') {
             field_name[i] = *sql;
             i++;
             sql++;
@@ -138,22 +138,47 @@ bool has_reached_sql_end(char *sql) {
  * @param sql Pointer to a position in the sql query.
  * @param result a pointer to the list of values or fields names in an organised structure to modificate.
  * @return char* Pointer to the position in the query after the list of values or fields names.
+ * @author @estebanbecker
  */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    char *cursor = get_sep_space(sql);
+    
     char field[TEXT_LENGTH];
     bool continue_parsing = true;
+    sql= get_sep_space(sql);
+
+    int i = 0; //debugging
 
     while (continue_parsing)
     {
-        if(has_reached_sql_end(cursor)) {
+        i++;
+        if(has_reached_sql_end(sql)) {
             continue_parsing = false;
-        }else if(get_keyword(cursor, "where") != NULL) {
+        }else if(get_keyword(sql, "where") != NULL) {
             continue_parsing = false;
+        }else{
+            sql= get_field_name(sql, field);
+            if(is_int(field)) {
+                result->fields[result->fields_count].field_type = TYPE_INTEGER;
+                result->fields[result->fields_count].field_value.int_value = atoi(field);
+            }else if(is_float(field)) {
+                result->fields[result->fields_count].field_type = TYPE_FLOAT;
+                result->fields[result->fields_count].field_value.float_value = atof(field);
+            }else{
+                result->fields[result->fields_count].field_type = TYPE_TEXT;
+                strcpy(result->fields[result->fields_count].field_value.text_value, field);
+            }
+            result->fields_count++;
+            if (get_sep_space_and_char(sql, ',') != NULL) {
+                sql = get_sep_space_and_char(sql, ',');
+            } else {
+                (get_sep_space(sql));
+            }
         }
+        
+
     }
     
-    //TO COMPLETE
+    return sql;
     
 
 }
@@ -212,7 +237,40 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  * @return query_result_t*  Return the data of the query
  */
 query_result_t *parse(char *sql, query_result_t *result) {
-    return NULL;
+    if(sql == NULL) {
+        return NULL;
+    }
+    if(has_reached_sql_end(sql)){
+        return NULL;
+    }
+
+    sql= get_sep_space(sql);
+
+    if(get_keyword(sql, "create") != NULL) {
+        parse_create(get_keyword(sql, "create"), result);
+    }else if(get_keyword(sql, "insert") != NULL) {
+        parse_insert(get_keyword(sql, "insert"), result);
+    }else if(get_keyword(sql, "select") != NULL) {
+        parse_select(get_keyword(sql, "select"), result);
+    }else if(get_keyword(sql, "update") != NULL) {
+        parse_update(get_keyword(sql, "update"), result);
+    }else if(get_keyword(sql, "delete") != NULL) {
+        parse_delete(get_keyword(sql, "delete"), result);
+    }else if(get_keyword(sql, "drop") != NULL) {
+        sql=get_keyword(sql, "drop");
+        sql= get_sep_space(sql);
+        if(get_keyword(sql, "table") != NULL) {
+            parse_drop_table(get_keyword(sql, "table"), result);
+        }else if(get_keyword(sql, "database") != NULL) {
+            parse_drop_db(get_keyword(sql, "database"), result);
+        }else if(get_keyword(sql, "db") != NULL) {
+            parse_drop_db(get_keyword(sql, "db"), result);
+        }
+
+    }else{
+        return NULL;
+    }
+    return result;
 }
 
 /**
@@ -291,3 +349,5 @@ query_result_t *parse_drop_db(char *sql, query_result_t *result) {
 query_result_t *parse_drop_table(char *sql, query_result_t *result) {
     return NULL;
 }
+
+

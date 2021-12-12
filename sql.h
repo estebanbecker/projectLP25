@@ -64,4 +64,10 @@ query_result_t *parse_delete(char *sql, query_result_t *result);
 query_result_t *parse_drop_db(char *sql, query_result_t *result);
 query_result_t *parse_drop_table(char *sql, query_result_t *result);
 
+bool is_int(char *str);
+bool is_float(char *str);
+bool is_string(char *str);
+
+
+char *parse_fields_or_values_list(char *sql, table_record_t *result);
 #endif //_SQL_H

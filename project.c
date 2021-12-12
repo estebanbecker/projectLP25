@@ -26,6 +26,15 @@ int main(int argc, char *argv[]) {
         buffer[strlen(buffer)-1] = '\0';
         if (strcmp(buffer, "exit") == 0)
             break;
+        
+        printf("%s\n", buffer);
+        table_record_t *record = NULL;
+        record = (table_record_t *)malloc(sizeof(table_record_t));
+
+        parse_fields_or_values_list(buffer, record);
+
+        printf("fini");
+        
         // Here: parse SQL, check query, execute query
     } while (true);
 
