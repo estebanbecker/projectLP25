@@ -10,3 +10,6 @@ query_exec.o
 table.o
 .vscode/tasks.json
 .vscode/launch.json
+CMakeLists.txt
+build
+main.cpp
