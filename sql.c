@@ -17,6 +17,9 @@
  * @author @estebanbecker
  */
 char *get_sep_space(char *sql) {
+    /*if(!isspace(*sql)) {
+        printf("Use less \n");
+    }*/
     while(isspace(*sql)) {
         sql++;
     }
@@ -36,17 +39,13 @@ char *get_sep_space(char *sql) {
  * @author @estebanbecker
  */
 char *get_sep_space_and_char(char *sql, char c) {
-    while(isspace(*sql)) {
-        sql++;
-    }
-    if(*sql == c) {
+    sql = get_sep_space(sql);
+    if (*sql == c) {
         sql++;
     }else{
         return NULL;
     }
-    while(isspace(*sql)) {
-        sql++;
-    }
+    sql=get_sep_space(sql);
     return sql;
 }
 
@@ -62,15 +61,16 @@ char *get_sep_space_and_char(char *sql, char c) {
  */
 char *get_keyword(char *sql, char *keyword) {
     int valid = 1;
+    sql=get_sep_space(sql);
     while(valid && *keyword != '\0') {
-        if(tolower(*sql) != tolower(*keyword)) {
+        if (tolower(*sql) != tolower(*keyword)) {
             valid = 0;
         }
         sql++;
         keyword++;
     }
-
-    if(valid) {
+    sql=get_sep_space(sql);
+    if (valid) {
         return sql;
     }else{
         return NULL;
@@ -90,18 +90,18 @@ char *get_keyword(char *sql, char *keyword) {
 char *get_field_name(char *sql, char *field_name) {
     int i = 0;
 
-    if(*sql== '\'') {
+    if (*sql== '\'') {
         i++;
         sql++;
         while(*sql != '\'') {
-            field_name[i-1] = sql[i];
+            field_name[i-1] = *sql;
             i++;
             sql++;
         }
         field_name[i-1] = '\0';
-        return sql++;
+        return ++sql;
     }else{
-        while(!isspace(*sql)) {
+        while(isalnum(*sql)) {
             field_name[i] = *sql;
             i++;
             sql++;
@@ -138,37 +138,95 @@ bool has_reached_sql_end(char *sql) {
  * @param sql Pointer to a position in the sql query.
  * @param result a pointer to the list of values or fields names in an organised structure to modificate.
  * @return char* Pointer to the position in the query after the list of values or fields names.
+ * @author @estebanbecker
  */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    char *cursor = get_sep_space(sql);
+    
     char field[TEXT_LENGTH];
     bool continue_parsing = true;
+    sql= get_sep_space(sql);
+
+    int i = 0; //debugging
 
     while (continue_parsing)
     {
-        if(has_reached_sql_end(cursor)) {
+        i++;
+        if (has_reached_sql_end(sql)) {
             continue_parsing = false;
-        }else if(get_keyword(cursor, "where") != NULL) {
-            continue_parsing = false;
+        }else{
+            sql= get_field_name(sql, field);
+            if (is_int(field)) {
+                result->fields[result->fields_count].field_type = TYPE_INTEGER;
+                result->fields[result->fields_count].field_value.int_value = atoi(field);
+            }else if (is_float(field)) {
+                result->fields[result->fields_count].field_type = TYPE_FLOAT;
+                result->fields[result->fields_count].field_value.float_value = atof(field);
+            }else{
+                result->fields[result->fields_count].field_type = TYPE_TEXT;
+                strcpy(result->fields[result->fields_count].field_value.text_value, field);
+            }
+            result->fields_count++;
+            if (get_sep_space_and_char(sql, ',') != NULL) {
+                sql = get_sep_space_and_char(sql, ',');
+            } else {
+                continue_parsing = false;
+            }
         }
+        
+
     }
     
-    //TO COMPLETE
+    return sql;
     
 
 }
 
 /**
  * @brief Get a definition of a table.
- * @example "id integer primary key, name text, age float)" -> ")" and result->fields_count = 3 result->definitions[0] = TYPE_PRIMARY_KEY,"id" result->definitions[1] = TYPE_TEXT,"name" result->definitions[2] = TYPE_FLOAT,"age"
+ * @example "(id primary key, name text, age float);" -> ";" and result->fields_count = 3 result->definitions[0] = TYPE_PRIMARY_KEY,"id" result->definitions[1] = TYPE_TEXT,"name" result->definitions[2] = TYPE_FLOAT,"age"
  * 
  * @param sql Pointer to a position in the sql query.
  * @param result Pointer to the table definition structure to modificate.
  * @return char* Pointer to the position in the query after the table definition.
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
-    
-    return sql;
+    if (*sql != '(') {
+        return NULL;
+    }
+    sql++;
+    while (*sql != ')') {
+        sql = get_field_name(sql, result->definitions[result->fields_count].column_name);
+        if (sql == NULL) {
+            return NULL;
+        }else{
+            sql = get_sep_space(sql);
+            if (get_keyword(sql, "primary") != NULL) {
+                result->definitions[result->fields_count].column_type = TYPE_PRIMARY_KEY;
+                sql = get_keyword(sql, "primary");
+                sql = get_sep_space(sql);
+            }else if (get_keyword(sql, "text") != NULL) {
+                result->definitions[result->fields_count].column_type = TYPE_TEXT;
+                sql = get_keyword(sql, "text");
+                sql = get_sep_space(sql);
+            }else if (get_keyword(sql, "float") != NULL) {
+                result->definitions[result->fields_count].column_type = TYPE_FLOAT;
+                sql = get_keyword(sql, "float");
+                sql = get_sep_space(sql);
+            }else if (get_keyword(sql, "int") != NULL) {
+                result->definitions[result->fields_count].column_type = TYPE_INTEGER;
+                sql = get_keyword(sql, "int");
+                sql = get_sep_space(sql);
+            }else{
+                return NULL;
+            }
+        }
+        if (get_sep_space_and_char(sql, ',') != NULL) {
+            sql = get_sep_space_and_char(sql, ',');
+        } else {
+            return NULL;
+        }
+    }
+    return ++sql;
 }
 
 /**
@@ -179,6 +237,36 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
  * @return char* Pointer to the position in the query after the equality condition.
  */
 char *parse_equality(char *sql, field_record_t *equality) {
+
+    char field1[TEXT_LENGTH], field2[TEXT_LENGTH];
+
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+
+    sql = get_field_name(sql, field1);
+    if (sql==NULL) {
+        return NULL;
+    }
+    sql = get_sep_space(sql);
+
+    if (get_keyword(sql, "=") != NULL) {
+        sql = get_keyword(sql, "=");
+        sql = get_sep_space(sql);
+    }
+
+    sql = get_field_name(sql, field2);
+    if (sql==NULL) {
+        return NULL;
+    } 
+    sql = get_sep_space(sql);
+
+    strcpy(equality->field_value.text_value, field1);
+    strcat(equality->field_value.text_value, "=");
+    strcat(equality->field_value.text_value, field2);
+
+    equality->field_type = TYPE_UNKNOWN;
+
     return sql;
 }
 
@@ -190,7 +278,24 @@ char *parse_equality(char *sql, field_record_t *equality) {
  * @return char* Pointer to the position in the query after the condition.
  */
 char *parse_set_clause(char *sql, table_record_t *result) {
-    return sql;
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_sep_space(sql);
+
+    while (!has_reached_sql_end(sql)) {
+        sql = parse_equality(sql, &result->fields[result->fields_count]);
+        if (sql == NULL) {
+            return NULL;
+        }
+        result->fields_count++;
+        if (get_sep_space_and_char(sql, ',') != NULL) {
+            sql = get_sep_space_and_char(sql, ',');
+        } else {
+            return sql;
+        }
+    }
+    return sql;    
 }
 
 /**
@@ -201,6 +306,42 @@ char *parse_set_clause(char *sql, table_record_t *result) {
  * @return char* Pointer to the position in the query after the condition.
  */
 char *parse_where_clause(char *sql, filter_t *filter) {
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+
+    while (!has_reached_sql_end(sql)){
+        sql = get_sep_space(sql);
+        
+        sql = parse_equality(sql, &filter->values.fields[filter->values.fields_count]);
+        filter->values.fields_count++;
+
+        if (has_reached_sql_end(sql)) {
+            return NULL;
+        }else if (get_keyword(sql, "AND") != NULL) {
+            
+            sql = get_keyword(sql, "AND");
+            
+            if(filter->logic_operator == OP_OR && filter->values.fields_count > 1){
+                filter->logic_operator = OP_ERROR;
+            } else {
+                filter->logic_operator = OP_AND;
+            }
+        } else if(get_keyword(sql, "OR") != NULL){
+            
+            sql = get_keyword(sql, "AND");
+            
+            if(filter->logic_operator == OP_AND && filter->values.fields_count > 1){
+                filter->logic_operator = OP_ERROR;
+            } else {
+                filter->logic_operator = OP_OR;
+            }
+
+        }else{
+            return NULL;
+        }
+    }
+    
     return sql;
 }
 
@@ -212,7 +353,44 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  * @return query_result_t*  Return the data of the query
  */
 query_result_t *parse(char *sql, query_result_t *result) {
-    return NULL;
+
+    if (sql == NULL) {
+        return NULL;
+    }
+
+    if (has_reached_sql_end(sql)){
+        return NULL;
+    }
+
+    sql= get_sep_space(sql);
+
+    if (get_keyword(sql, "create") != NULL) {
+        parse_create(get_keyword(sql, "create"), result);
+    }else if (get_keyword(sql, "insert") != NULL) {
+        parse_insert(get_keyword(sql, "insert"), result);
+    }else if (get_keyword(sql, "select") != NULL) {
+        parse_select(get_keyword(sql, "select"), result);
+    }else if (get_keyword(sql, "update") != NULL) {
+        parse_update(get_keyword(sql, "update"), result);
+    }else if (get_keyword(sql, "delete") != NULL) {
+        parse_delete(get_keyword(sql, "delete"), result);
+    }else if (get_keyword(sql, "drop") != NULL) {
+        sql=get_keyword(sql, "drop");
+        sql= get_sep_space(sql);
+        if (get_keyword(sql, "table") != NULL) {
+            parse_drop_table(get_keyword(sql, "table"), result);
+        }else if (get_keyword(sql, "database") != NULL) {
+            parse_drop_db(get_keyword(sql, "database"), result);
+        }else if (get_keyword(sql, "db") != NULL) {
+            parse_drop_db(get_keyword(sql, "db"), result);
+        }else{
+            return NULL;
+        }
+
+    }else{
+        return NULL;
+    }
+    return result;
 }
 
 /**
@@ -223,7 +401,63 @@ query_result_t *parse(char *sql, query_result_t *result) {
  * @return query_result_t* Return the data of the query
  */
 query_result_t *parse_select(char *sql, query_result_t *result) {
-    return NULL;
+
+    char *table_name[TEXT_LENGTH];
+
+    //Get the colomns names
+    result->query_type = QUERY_SELECT;
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_sep_space(sql);
+    if(get_keyword(sql, "*") != NULL){
+        result->query_content.select_query.set_clause.fields_count = 1;
+        result->query_content.select_query.set_clause.fields[0].field_type = TYPE_UNKNOWN;
+        strcpy(result->query_content.select_query.set_clause.fields[0].field_value.text_value, "*");
+    }else{
+        sql = parse_fields_or_values_list(sql, &result->query_content.select_query.set_clause);
+    }
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_sep_space(sql);
+
+    //Get the table name
+    if (get_keyword(sql, "from") != NULL) {
+
+        sql = get_keyword(sql, "from");
+        sql = get_sep_space(sql);
+
+        if (get_field_name(sql, table_name) != NULL) {
+            sql = get_field_name(sql, table_name);
+            strcpy(result->query_content.select_query.table_name, table_name);
+        } else {
+            return NULL;
+        }
+        
+        strcpy(result->query_content.select_query.table_name, table_name);
+
+    } else {
+        return NULL;
+    }
+
+    //Get a where clause
+    if(has_reached_sql_end(sql)){
+        return result;
+    }else if(get_keyword(sql, "where") != NULL){
+        
+        if(has_reached_sql_end(sql)){
+            return NULL;
+        }
+        sql = get_keyword(sql, "where");
+        sql = get_sep_space(sql);
+        sql = parse_where_clause(sql, &result->query_content.select_query.where_clause);
+
+    }else{
+        return NULL;
+    }
+
+    return result;
 }
 
 /**

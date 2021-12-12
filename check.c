@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <linux/limits.h>
+#include <ctype.h>
 
 #include "table.h"
 
@@ -169,18 +170,44 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  * @param value the text representation to test
  * @return true if value can be converted into an integer, false if it cannot
  */
-bool is_int(char *value) {
-    return false;
+
+bool is_int(char *field) {
+    if(*field == '-') {
+        field++;
+    }
+    while (*field != '\0') {
+        if (!isdigit(*field)) {
+            return false;
+        }
+        field++;
+    }
+    return true;
 }
+
+
 
 /*!
  * @brief function is_float tests if the string value is a text representation of a double value.
  * You may use strtod for this test.
  * @param value the text representation to test
  * @return true if value can be converted into a double, false if it cannot
+ * @author @estebanbecker
  */
-bool is_float(char *value) {
-    return false;
+bool is_float(char *field) {
+    bool is_dot = false;
+    while (*field != '\0') {
+        if (!isdigit(*field) && *field != '.' ) {
+            return false;
+        }
+        if (*field == '.') {
+            if (is_dot) {
+                return false;
+            }
+            is_dot = true;
+        }
+    field++;
+    }
+    return true;
 }
 
 /*!
@@ -190,5 +217,11 @@ bool is_float(char *value) {
  * @return true if value can be converted into a key, false if it cannot
  */
 bool is_key(char *value) {
-    return false;
+    while (*value != '\0') {
+        if (!isdigit(*value)) {
+            return false;
+        }
+        value++;
+    }
+    return true;
 }
