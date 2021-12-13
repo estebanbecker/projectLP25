@@ -157,7 +157,20 @@ void drop_table(char *table_name) {
  * @return the pointer to result, NULL if the function failed
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
+    FILE *def = open_definition_file(table_name, "r");
+    int field_count=0;
+    char field_name[TEXT_LENGTH];
+    char field_type[1];
+    if (def) {
+        while (fscanf(def, "%s %s", field_type, field_name) != EOF) {
+            strcpy(result->definitions[field_count].column_name, field_name);
+            result->definitions[field_count].column_type = field_type[0] - '0';
 
+            ++field_count;
+        }
+        result->fields_count = field_count;
+        return result;
+    }
     return NULL;
 }
 
