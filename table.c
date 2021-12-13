@@ -182,7 +182,14 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
  * @return the value of the record length.
  */
 uint16_t compute_record_length(table_definition_t *definition) {
-        uint16_t length = 0;
+    uint16_t length = 0;
+    for (int field_count = 0; field_count < definition->fields_count; ++field_count) {
+        if (definition->definitions[field_count].column_type == TYPE_TEXT){
+            length += 150;
+        }else {
+            length += 8;
+        }
+    }
     return length;
 }
 
