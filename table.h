@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "sql.h"
+#include "record_list.h"
 
 typedef struct __attribute__((__packed__)) { // attribute allows to directly fread from file into structure
     uint8_t is_active;
