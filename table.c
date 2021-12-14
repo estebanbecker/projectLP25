@@ -88,7 +88,7 @@ void create_table(create_query_t *table_definition) {
         char path_file[TEXT_LENGTH];
         uint16_t record_size;
         uint32_t offset = 1;
-        uint8_t key_value=1, active = 0;
+        uint8_t active = 1;
 
         //path to folder
         sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_name);
@@ -133,6 +133,7 @@ void create_table(create_query_t *table_definition) {
 
         //creation of table_name/table_name.key if needed
         if (key_needed) {
+            unsigned long long key_value=1;
             sprintf(path_file_extension, "%s.key", path_file);
             FILE *key = fopen(path_file_extension, "wb");
             fwrite(&key_value, sizeof(unsigned long long), 1, key);
@@ -276,9 +277,16 @@ void update_key(char *table_name, unsigned long long value) {
 /*!
  * @brief function get_next_key extract the next key value from a table key file.
  * @param table_name the name of the table whose key value we need.
- * @return the next value of the key is it exists, 0 else
+ * @return the next value of the key if it exists, 0 else
  */
 unsigned long long get_next_key(char *table_name) {
+    FILE *key = open_key_file(table_name, "rb");
+    if (key){
+        unsigned long long key_value;
+        fread(&key_value, sizeof(unsigned long long), 1, key);
+        fclose(key);
+        return key_value;
+    }
     return 0;
 }
 
