@@ -86,42 +86,58 @@ void create_table(create_query_t *table_definition) {
         int key_needed = false;
         char path_file_extension[TEXT_LENGTH];
         char path_file[TEXT_LENGTH];
+        int record_size;
+        uint32_t offset = 1,active = 1;
+        uint8_t key_value=1;
 
         //path to folder
-        sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_definition);
+        sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_name);
+        //table size
+        record_size = compute_record_length(&table_definition->table_definition);
+
 
         //creation of table_name/table_name.def
         sprintf(path_file_extension, "%s.def",path_file);
-        FILE *def = fopen(path_file_extension, "a");
+        FILE *def = fopen(path_file_extension, "w");
+        //creation of table_name/table_name.idx
+        sprintf(path_file_extension, "%s.idx", path_file);
+        FILE *idx = fopen(path_file_extension, "wb");
+
         for (int field = 0; field < table_definition->table_definition.fields_count; ++field) {
-            fprintf(def, "%u %s", table_definition->table_definition.definitions[field].column_type,
+            //filling def file
+            fprintf(def, "%u %s\n", table_definition->table_definition.definitions[field].column_type,
                     table_definition->table_definition.definitions[field].column_name);
 
-            //is creation of key table_name/table needed
+            //filling idx file
+            fwrite(&active, sizeof(uint8_t),1, idx);// offset
+            fwrite(&offset, sizeof(uint32_t),1, idx);// offset
+            fwrite(&record_size, sizeof(uint16_t), 1, idx);//size
+            fwrite("\n", sizeof(char), 1, idx);
+            //move to next offset
+            if (table_definition->table_definition.definitions[field].column_type == TYPE_TEXT){
+                offset+=TEXT_LENGTH;
+            }else {
+                offset+=8;
+            }
+
+            //is creation of key table_name/table.key needed
             if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
                 key_needed = true;
             }
         }
         fclose(def);
-
-        //creation of table_name/table_name.idx
-        sprintf(path_file_extension, "%s.idx", path_file);
-
-        FILE *idx = fopen(path_file_extension, "a");
         fclose(idx);
 
         //creation of table_name/table_name.data
         sprintf(path_file_extension, "%s.data", path_file);
-
-        FILE *data = fopen(path_file_extension, "a");
+        FILE *data = fopen(path_file_extension, "w");
         fclose(data);
 
         //creation of table_name/table_name.key if needed
         if (key_needed) {
             sprintf(path_file_extension, "%s.key", path_file);
-
-            FILE *key = fopen(path_file_extension, "a");
-            fprintf(data, "%d", 1);
+            FILE *key = fopen(path_file_extension, "wb");
+            fwrite(&key_value, sizeof(unsigned long long), 1, key);
             fclose(key);
         }
     }else {
