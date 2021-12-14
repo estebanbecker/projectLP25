@@ -86,15 +86,14 @@ void create_table(create_query_t *table_definition) {
         int key_needed = false;
         char path_file_extension[TEXT_LENGTH];
         char path_file[TEXT_LENGTH];
-        int record_size;
-        uint32_t offset = 1,active = 1;
-        uint8_t key_value=1;
+        uint16_t record_size;
+        uint32_t offset = 1;
+        uint8_t key_value=1, active = 0;
 
         //path to folder
         sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_name);
         //table size
         record_size = compute_record_length(&table_definition->table_definition);
-
 
         //creation of table_name/table_name.def
         sprintf(path_file_extension, "%s.def",path_file);
@@ -119,7 +118,6 @@ void create_table(create_query_t *table_definition) {
             }else {
                 offset+=8;
             }
-
             //is creation of key table_name/table.key needed
             if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
                 key_needed = true;
@@ -219,6 +217,28 @@ uint16_t compute_record_length(table_definition_t *definition) {
  */
 uint32_t find_first_free_record(char *table_name) {
     uint32_t offset = 0;
+    int activated=true, active=1;
+    long end;
+    FILE *idx = open_index_file(table_name, "r+b");
+    fseek(idx,0, SEEK_END);
+    end = ftell(idx);
+    fseek(idx,0, SEEK_SET);
+
+    do {
+        fread(&activated, sizeof(uint8_t), 1, idx);
+        fseek(idx, 7, SEEK_CUR);
+    }while (activated && ftell(idx) != end);
+    if (!activated){
+
+        fseek(idx, -8, SEEK_CUR);
+        //change active to 1
+        fwrite(&active, sizeof(uint8_t), 1, idx);
+        //get index
+        fread(&offset, sizeof(uint32_t), 1, idx);
+    }else {
+        offset=NULL;
+    }
+    fclose(idx);
     return offset;
 }
 
