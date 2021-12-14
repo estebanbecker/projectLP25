@@ -25,10 +25,6 @@ int main(int argc, char *argv[]) {
     table.table_definition.definitions[1].column_type = TYPE_PRIMARY_KEY;
     create_query_t *ptable = &table;
 
-    uint8_t active;
-    uint16_t length;
-    uint32_t index;
-
     char buffer[SQL_COMMAND_MAX_SIZE];
     do {
         printf("> ");

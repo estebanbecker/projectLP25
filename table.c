@@ -218,9 +218,10 @@ uint16_t compute_record_length(table_definition_t *definition) {
  */
 uint32_t find_first_free_record(char *table_name) {
     uint32_t offset = 0;
-    int activated=true, active=1;
+    int activated=1, active=1;
     long end;
     FILE *idx = open_index_file(table_name, "r+b");
+
     fseek(idx,0, SEEK_END);
     end = ftell(idx);
     fseek(idx,0, SEEK_SET);
@@ -230,14 +231,25 @@ uint32_t find_first_free_record(char *table_name) {
         fseek(idx, 7, SEEK_CUR);
     }while (activated && ftell(idx) != end);
     if (!activated){
-
+        printf("free space found\n");
         fseek(idx, -8, SEEK_CUR);
         //change active to 1
         fwrite(&active, sizeof(uint8_t), 1, idx);
         //get index
         fread(&offset, sizeof(uint32_t), 1, idx);
     }else {
-        offset=NULL;
+        int empty=0;
+        fseek(idx, -3, SEEK_END);
+        //read size to get end of buffer
+        fread(&offset, sizeof(uint16_t), 1, idx);
+        ++offset;
+        //skip \n
+        fseek(idx, 1, SEEK_CUR);
+        //set to active
+        fwrite(&active, sizeof(uint8_t), 1, idx);
+        //set everything to 0
+        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, idx);
+
     }
     fclose(idx);
     return offset;
@@ -272,6 +284,12 @@ char *format_row(char *table_name, char *buffer, table_definition_t *table_defin
  * @param value the new key value
  */
 void update_key(char *table_name, unsigned long long value) {
+    ++value;
+    unsigned long long file_value = get_next_key(table_name);
+    FILE *key;
+    key = open_key_file(table_name, "wb");
+    fwrite(file_value > value ? &file_value : &value, sizeof(unsigned long long), 1, key);
+    fclose(key);
 }
 
 /*!
