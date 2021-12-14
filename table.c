@@ -289,6 +289,11 @@ unsigned long long get_next_key(char *table_name) {
  * @return a pointer to the matching field_record_t if found, NULL else
  */
 field_record_t *find_field_in_table_record(char *field_name, table_record_t *record) {
+    for (int field = 0; field < record->fields_count; ++field) {
+        if (strcmp(field_name, record->fields[field].column_name) == 0){
+            return &record->fields[field];
+        }
+    }
     return NULL; // Checking the query shall avoid this
 }
 
