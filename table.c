@@ -332,7 +332,72 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  * @return true if the record matches the filter, false else
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
-    return false;
+    //if filter is null or more values in filter than record then match is false
+    if (filter == NULL || filter->values.fields_count > record->fields_count){
+        return 0;
+    }
+
+    bool match;
+    for (int filter_field = 0; filter_field < filter->values.fields_count; ++filter_field) {
+        for (int record_field = 0; record_field < record->fields_count; ++record_field) {
+            if (filter->values.fields[filter_field].field_type == record->fields[record_field].field_type &&
+                strcmp(filter->values.fields[filter_field].column_name, record->fields[record_field].column_name) ==
+                0) {
+                printf("found same name same type\n");
+                switch (filter->values.fields[filter_field].field_type) {
+
+                    case TYPE_PRIMARY_KEY:
+                        if (filter->values.fields[filter_field].field_value.primary_key_value ==
+                            record->fields[record_field].field_value.primary_key_value) {
+                            match = true;
+                            record_field = record->fields_count;
+                        } else {
+                            match = false;
+                        }
+                        break;
+                    case TYPE_INTEGER:
+                        if (filter->values.fields[filter_field].field_value.int_value ==
+                            record->fields[record_field].field_value.int_value) {
+                            match = true;
+                            record_field = record->fields_count;
+                        } else {
+                            match = false;
+                        }
+                        break;
+                    case TYPE_FLOAT:
+                        if (filter->values.fields[filter_field].field_value.float_value ==
+                            record->fields[record_field].field_value.float_value) {
+                            match = true;
+                            record_field = record->fields_count;
+                        } else {
+                            match = false;
+                        }
+                        break;
+                    case TYPE_TEXT:
+                        if (strcmp(filter->values.fields[filter_field].field_value.text_value,
+                                   record->fields[record_field].field_value.text_value) == 0) {
+                            match = true;
+                            record_field = record->fields_count;
+                        } else {
+                            match = false;
+                        }
+                        break;
+                }
+            } else {
+                match = false;
+            }
+        }
+        if (filter->logic_operator == OP_OR && match == true){
+            return true;
+        }else if (filter->logic_operator == OP_AND && match == false){
+            return false;
+        }
+    }
+    if (filter->logic_operator == OP_OR){
+        return false;
+    }else if (filter->logic_operator == OP_AND){
+        return true;
+    }
 }
 
 /*!
