@@ -98,32 +98,22 @@ void create_table(create_query_t *table_definition) {
         //creation of table_name/table_name.def
         sprintf(path_file_extension, "%s.def",path_file);
         FILE *def = fopen(path_file_extension, "w");
-        //creation of table_name/table_name.idx
-        sprintf(path_file_extension, "%s.idx", path_file);
-        FILE *idx = fopen(path_file_extension, "wb");
 
         for (int field = 0; field < table_definition->table_definition.fields_count; ++field) {
             //filling def file
             fprintf(def, "%u %s\n", table_definition->table_definition.definitions[field].column_type,
                     table_definition->table_definition.definitions[field].column_name);
 
-            //filling idx file
-            fwrite(&active, sizeof(uint8_t),1, idx);// offset
-            fwrite(&offset, sizeof(uint32_t),1, idx);// offset
-            fwrite(&record_size, sizeof(uint16_t), 1, idx);//size
-            fwrite("\n", sizeof(char), 1, idx);
-            //move to next offset
-            if (table_definition->table_definition.definitions[field].column_type == TYPE_TEXT){
-                offset+=TEXT_LENGTH;
-            }else {
-                offset+=8;
-            }
             //is creation of key table_name/table.key needed
             if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
                 key_needed = true;
             }
         }
         fclose(def);
+
+        //creation of table_name/table_name.idx
+        sprintf(path_file_extension, "%s.idx", path_file);
+        FILE *idx = fopen(path_file_extension, "a");
         fclose(idx);
 
         //creation of table_name/table_name.data
@@ -226,30 +216,43 @@ uint32_t find_first_free_record(char *table_name) {
     end = ftell(idx);
     fseek(idx,0, SEEK_SET);
 
-    do {
+    //if file is empty
+    if (ftell(idx) == end){
+        int empty=0;
+        fwrite(&active, sizeof(uint8_t), 1, idx);
+        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, idx);
+        fwrite("\n", sizeof(char), 1, idx);
+        fclose(idx);
+        return 0;
+    }
+
+    //find free space or exit if arrive to end of file
+    while (activated && ftell(idx) != end){
         fread(&activated, sizeof(uint8_t), 1, idx);
         fseek(idx, 7, SEEK_CUR);
-    }while (activated && ftell(idx) != end);
+    }
+    //if free space found change active to 1
     if (!activated){
-        printf("free space found\n");
         fseek(idx, -8, SEEK_CUR);
         //change active to 1
         fwrite(&active, sizeof(uint8_t), 1, idx);
         //get index
         fread(&offset, sizeof(uint32_t), 1, idx);
-    }else {
-        int empty=0;
-        fseek(idx, -3, SEEK_END);
+    }else { //else get old size and offset and new offset is index + size
+        int size;
+        fseek(idx, -7, SEEK_END);
         //read size to get end of buffer
-        fread(&offset, sizeof(uint16_t), 1, idx);
-        ++offset;
+        fread(&offset, sizeof(uint32_t), 1, idx);;
+        fread(&size, sizeof(uint16_t), 1, idx);
+        offset += size;
         //skip \n
         fseek(idx, 1, SEEK_CUR);
         //set to active
         fwrite(&active, sizeof(uint8_t), 1, idx);
         //set everything to 0
-        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, idx);
-
+        fwrite(&offset, sizeof(uint32_t), 1, idx);
+        fwrite(&size, sizeof(uint16_t ), 1, idx);
+        fwrite("\n", sizeof(char), 1, idx);
     }
     fclose(idx);
     return offset;
