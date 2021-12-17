@@ -162,12 +162,12 @@ void drop_table(char *table_name) {
  * @return the pointer to result, NULL if the function failed
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
-    FILE *def = open_definition_file(table_name, "r");
+    FILE *file = open_definition_file(table_name, "r");
     int field_count=0;
     char field_name[TEXT_LENGTH];
     char field_type[1];
-    if (def) {
-        while (fscanf(def, "%s %s", field_type, field_name) != EOF) {
+    if (file) {
+        while (fscanf(file, "%s %s", field_type, field_name) != EOF) {
             strcpy(result->definitions[field_count].column_name, field_name);
             result->definitions[field_count].column_type = field_type[0] - '0';
 
@@ -210,51 +210,51 @@ uint32_t find_first_free_record(char *table_name) {
     uint32_t offset = 0;
     int activated=1, active=1;
     long end;
-    FILE *idx = open_index_file(table_name, "r+b");
+    FILE *file = open_index_file(table_name, "r+b");
 
-    fseek(idx,0, SEEK_END);
-    end = ftell(idx);
-    fseek(idx,0, SEEK_SET);
+    fseek(file,0, SEEK_END);
+    end = ftell(file);
+    fseek(file,0, SEEK_SET);
 
     //if file is empty
-    if (ftell(idx) == end){
+    if (ftell(file) == end){
         int empty=0;
-        fwrite(&active, sizeof(uint8_t), 1, idx);
-        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, idx);
-        fwrite("\n", sizeof(char), 1, idx);
-        fclose(idx);
+        fwrite(&active, sizeof(uint8_t), 1, file);
+        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, file);
+        fwrite("\n", sizeof(char), 1, file);
+        fclose(file);
         return 0;
     }
 
     //find free space or exit if arrive to end of file
-    while (activated && ftell(idx) != end){
-        fread(&activated, sizeof(uint8_t), 1, idx);
-        fseek(idx, 7, SEEK_CUR);
+    while (activated && ftell(file) != end){
+        fread(&activated, sizeof(uint8_t), 1, file);
+        fseek(file, 7, SEEK_CUR);
     }
     //if free space found change active to 1
     if (!activated){
-        fseek(idx, -8, SEEK_CUR);
+        fseek(file, -8, SEEK_CUR);
         //change active to 1
-        fwrite(&active, sizeof(uint8_t), 1, idx);
+        fwrite(&active, sizeof(uint8_t), 1, file);
         //get index
-        fread(&offset, sizeof(uint32_t), 1, idx);
+        fread(&offset, sizeof(uint32_t), 1, file);
     }else { //else get old size and offset and new offset is index + size
         int size;
-        fseek(idx, -7, SEEK_END);
+        fseek(file, -7, SEEK_END);
         //read size to get end of buffer
-        fread(&offset, sizeof(uint32_t), 1, idx);;
-        fread(&size, sizeof(uint16_t), 1, idx);
+        fread(&offset, sizeof(uint32_t), 1, file);;
+        fread(&size, sizeof(uint16_t), 1, file);
         offset += size;
         //skip \n
-        fseek(idx, 1, SEEK_CUR);
+        fseek(file, 1, SEEK_CUR);
         //set to active
-        fwrite(&active, sizeof(uint8_t), 1, idx);
+        fwrite(&active, sizeof(uint8_t), 1, file);
         //set everything to 0
-        fwrite(&offset, sizeof(uint32_t), 1, idx);
-        fwrite(&size, sizeof(uint16_t ), 1, idx);
-        fwrite("\n", sizeof(char), 1, idx);
+        fwrite(&offset, sizeof(uint32_t), 1, file);
+        fwrite(&size, sizeof(uint16_t ), 1, file);
+        fwrite("\n", sizeof(char), 1, file);
     }
-    fclose(idx);
+    fclose(file);
     return offset;
 }
 
@@ -425,5 +425,30 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
  * @return the pointer to to result if succeeded, NULL else.
  */
 table_record_t *get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result) {
+    FILE *file = open_content_file(table_name, "r");
+    if (ftell(file) == fseek(file, 0, SEEK_END)){
+        return NULL;
+    }
+    fseek(file, offset, SEEK_CUR);
+    result->fields_count = def->fields_count;
+    for (int field = 0; field < def->fields_count; ++field) {
+        strcpy(result->fields[field].column_name, def->definitions[field].column_name);
+        result->fields[field].field_type = def->definitions[field].column_type;
+        switch (result->fields[field].field_type) {
+            case TYPE_PRIMARY_KEY:
+                fread(&result->fields[field].field_value.primary_key_value, sizeof(uint32_t), 1,file);
+                break;
+            case TYPE_INTEGER:
+                fread(&result->fields[field].field_value.int_value, sizeof(uint32_t), 1,file);
+                break;
+            case TYPE_FLOAT:
+                fread(&result->fields[field].field_value.float_value, sizeof(uint32_t), 1,file);
+                break;
+            case TYPE_TEXT:
+                fread(&result->fields[field].field_value.text_value, sizeof(char ), TEXT_LENGTH,file);
+                break;
+        }
+    }
+    fclose(file);
     return result;
 }
