@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
 
     
     char buffer[SQL_COMMAND_MAX_SIZE];
+    query_result_t query;
+    
     do {
         printf("> ");
         fflush(stdin);
@@ -28,12 +30,11 @@ int main(int argc, char *argv[]) {
             break;
         
         printf("%s\n", buffer);
-        table_record_t *record = NULL;
-        record = (table_record_t *)malloc(sizeof(table_record_t));
 
-        parse_fields_or_values_list(buffer, record);
+        
 
-        printf("fini");
+        parse(buffer, &query);
+
         
         // Here: parse SQL, check query, execute query
     } while (true);
