@@ -410,7 +410,7 @@ query_result_t *parse(char *sql, query_result_t *result) {
  */
 query_result_t *parse_select(char *sql, query_result_t *result) {
 
-    char *table_name[TEXT_LENGTH];
+    char table_name[TEXT_LENGTH];
 
     //Get the colomns names
     result->query_type = QUERY_SELECT;
@@ -436,14 +436,11 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
         sql = get_keyword(sql, "from");
         sql = get_sep_space(sql);
 
-        if (get_field_name(sql, table_name) != NULL) {
-            sql = get_field_name(sql, table_name);
-            strcpy(result->query_content.select_query.table_name, table_name);
+        if (get_field_name(sql, result->query_content.select_query.table_name) != NULL) {
+            sql = get_field_name(sql, result->query_content.select_query.table_name);
         } else {
             return NULL;
         }
-        
-        strcpy(result->query_content.select_query.table_name, table_name);
 
     } else {
         return NULL;
