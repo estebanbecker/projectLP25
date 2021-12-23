@@ -148,6 +148,10 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 
     int i = 0; //debugging
 
+    if(*sql='(') {
+        sql++;
+    }
+
     while (continue_parsing)
     {
         i++;
@@ -166,7 +170,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
                 strcpy(result->fields[result->fields_count].field_value.text_value, field);
             }
             result->fields_count++;
-            if (get_sep_space_and_char(sql, ',') != NULL) {
+            if (get_sep_space_and_char(sql, ',') != NULL && get_sep_space_and_char(sql, ')') == NULL) {
                 sql = get_sep_space_and_char(sql, ',');
             } else {
                 continue_parsing = false;
@@ -176,6 +180,10 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 
     }
     
+    if(get_sep_space_and_char(sql, ')') != NULL) {
+        sql = get_sep_space_and_char(sql, ')');
+    }
+
     return sql;
     
 
@@ -494,7 +502,33 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
  * @return query_result_t* Return the data of the query
  */
 query_result_t *parse_insert(char *sql, query_result_t *result) {
-    return NULL;
+    char *table_name[TEXT_LENGTH];
+    result->query_type = QUERY_INSERT;
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_keyword(sql, "into");
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql= get_field_name(sql, result->query_content.insert_query.table_name);
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_keyword(sql, "values");
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_values);
+    if (has_reached_sql_end(sql)) {
+        return result;
+    }else{
+        return NULL;
+    }
 }
 
 /**
