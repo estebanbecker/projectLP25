@@ -89,7 +89,7 @@ char *get_keyword(char *sql, char *keyword) {
  */
 char *get_field_name(char *sql, char *field_name) {
     int i = 0;
-
+    sql=get_sep_space(sql);
     if (*sql== '\'') {
         i++;
         sql++;
@@ -190,6 +190,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
  * @return char* Pointer to the position in the query after the table definition.
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
+    sql = get_sep_space(sql);
     if (*sql != '(') {
         return NULL;
     }
@@ -200,9 +201,9 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
             return NULL;
         }else{
             sql = get_sep_space(sql);
-            if (get_keyword(sql, "primary") != NULL) {
+            if (get_keyword(sql, "primary key") != NULL) {
                 result->definitions[result->fields_count].column_type = TYPE_PRIMARY_KEY;
-                sql = get_keyword(sql, "primary");
+                sql = get_keyword(sql, "primary key");
                 sql = get_sep_space(sql);
             }else if (get_keyword(sql, "text") != NULL) {
                 result->definitions[result->fields_count].column_type = TYPE_TEXT;
@@ -220,11 +221,12 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
                 return NULL;
             }
         }
-        if (get_sep_space_and_char(sql, ',') != NULL) {
+        result->fields_count++;
+        if (get_sep_space_and_char(sql, ',') != NULL ) {
             sql = get_sep_space_and_char(sql, ',');
-        } else {
+        } else if (*sql != ')') {
             return NULL;
-        }
+        }         
     }
     return ++sql;
 }
@@ -362,8 +364,8 @@ query_result_t *parse(char *sql, query_result_t *result) {
 
     sql= get_sep_space(sql);
 
-    if (get_keyword(sql, "create") != NULL) {
-        parse_create(get_keyword(sql, "create"), result);
+    if (get_keyword(sql, "create table") != NULL) {
+        parse_create(get_keyword(sql, "create table"), result);
     }else if (get_keyword(sql, "insert") != NULL) {
         parse_insert(get_keyword(sql, "insert"), result);
     }else if (get_keyword(sql, "select") != NULL) {
@@ -461,12 +463,27 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
 /**
  * @brief function that extract the data from a sql create query.
  * 
- * @param sql Pointer to the sql create query without CREATE.
+ * @param sql Pointer to the sql create query without CREATE TABLE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
  */
 query_result_t *parse_create(char *sql, query_result_t *result) {
-    return NULL;
+    result->query_type = QUERY_CREATE_TABLE;
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = get_field_name(sql, result->query_content.create_query.table_name);
+
+    if (has_reached_sql_end(sql)) {
+        return NULL;
+    }
+    sql = parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+    if (has_reached_sql_end(sql)) {
+        return result;
+    }else{
+        return NULL;
+    }
+
 }
 
 /**
