@@ -196,6 +196,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
  * @param sql Pointer to a position in the sql query.
  * @param result Pointer to the table definition structure to modificate.
  * @return char* Pointer to the position in the query after the table definition.
+ * @author @estebanbecker
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
     sql = get_sep_space(sql);
@@ -245,6 +246,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
  * @param sql Pointer to a position in the sql query.
  * @param equality Pointer to the equality condition structure to modificate.
  * @return char* Pointer to the position in the query after the equality condition.
+ * @author @estebanbecker
  */
 char *parse_equality(char *sql, field_record_t *equality) {
 
@@ -286,6 +288,7 @@ char *parse_equality(char *sql, field_record_t *equality) {
  * @param sql Pointer to a position in the sql query.
  * @param result Pointer to the condition structure to modificate.
  * @return char* Pointer to the position in the query after the condition.
+ * @author @estebanbecker
  */
 char *parse_set_clause(char *sql, table_record_t *result) {
     if (has_reached_sql_end(sql)) {
@@ -314,6 +317,7 @@ char *parse_set_clause(char *sql, table_record_t *result) {
  * @param sql Pointer to a position in the sql query.
  * @param filter Pointer to the condition structure to modificate.
  * @return char* Pointer to the position in the query after the condition.
+ * @author @estebanbecker
  */
 char *parse_where_clause(char *sql, filter_t *filter) {
     if (has_reached_sql_end(sql)) {
@@ -361,6 +365,7 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  * @param sql Pointer to the sql query.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t*  Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse(char *sql, query_result_t *result) {
     if(sql == NULL) {
@@ -407,11 +412,9 @@ query_result_t *parse(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql select query without SELECT.
  * @param result Point to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse_select(char *sql, query_result_t *result) {
-
-    char table_name[TEXT_LENGTH];
-
     //Get the colomns names
     result->query_type = QUERY_SELECT;
     if (has_reached_sql_end(sql)) {
@@ -471,6 +474,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql create query without CREATE TABLE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse_create(char *sql, query_result_t *result) {
     result->query_type = QUERY_CREATE_TABLE;
@@ -497,9 +501,9 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql insert query without INSERT.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse_insert(char *sql, query_result_t *result) {
-    char *table_name[TEXT_LENGTH];
     result->query_type = QUERY_INSERT;
     if (has_reached_sql_end(sql)) {
         return NULL;
@@ -558,6 +562,7 @@ query_result_t *parse_delete(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql drop query without DROP DB/DROP DATABASE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse_drop_db(char *sql, query_result_t *result) {
     result->query_type = QUERY_DROP_DB;
@@ -578,6 +583,7 @@ query_result_t *parse_drop_db(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql drop table query without DROP TABLE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @estebanbecker
  */
 query_result_t *parse_drop_table(char *sql, query_result_t *result) {
     result->query_type = QUERY_DROP_TABLE;
