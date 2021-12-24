@@ -536,8 +536,36 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
  * @return query_result_t* Return the data of the query
  */
 query_result_t *parse_update(char *sql, query_result_t *result) {
-    //TODO
-    return NULL;
+    result -> query_type = QUERY_UPDATE;
+    if(has_reached_sql_end(sql)){
+            return NULL;
+    }
+    sql=get_field_name(sql, result->query_content.update_query.table_name);
+    if(has_reached_sql_end(sql)){
+        return NULL;
+    }
+    sql=get_keyword(sql, "set");
+    if(has_reached_sql_end(sql)){
+        return NULL;
+    }
+    sql=parse_fields_or_values_list(sql, &result->query_content.update_query.set_clause);
+    if(has_reached_sql_end(sql)){
+        return result;
+    }
+    else if(get_keyword(sql, "where") != NULL){
+        
+        if(has_reached_sql_end(sql)){
+            return NULL;
+        }
+        sql = get_keyword(sql, "where");
+        sql = get_sep_space(sql);
+        sql = parse_where_clause(sql, &result->query_content.update_query.where_clause);
+
+    }else{
+        return NULL;
+    }
+
+    return result;
 }
 
 /**
@@ -548,8 +576,32 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
  * @return query_result_t* Return the data of the query
  */
 query_result_t *parse_delete(char *sql, query_result_t *result) {
-    //TODO
-    return NULL;
+    result -> query_type = QUERY_DELETE;
+        if(has_reached_sql_end(sql)){
+            return NULL;
+    }
+    sql=get_keyword(sql, "from");
+    if(has_reached_sql_end(sql)){
+        return NULL;
+    }
+    sql=get_field_name(sql, result->query_content.delete_query.table_name);
+    if(has_reached_sql_end(sql)){
+        return result;
+    }
+    else if(get_keyword(sql, "where") != NULL){
+        
+        if(has_reached_sql_end(sql)){
+            return NULL;
+        }
+        sql = get_keyword(sql, "where");
+        sql = get_sep_space(sql);
+        sql = parse_where_clause(sql, &result->query_content.delete_query.where_clause);
+
+    }else{
+        return NULL;
+    }
+
+    return result;
 }
 
 /**
