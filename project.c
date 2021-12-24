@@ -16,7 +16,10 @@ int main(int argc, char *argv[]) {
     // -d database_name
     // -l directory of the parent database folder (default: current directory)
 
+    
     char buffer[SQL_COMMAND_MAX_SIZE];
+    query_result_t query;
+    
     do {
         printf("> ");
         fflush(stdin);
@@ -25,6 +28,14 @@ int main(int argc, char *argv[]) {
         buffer[strlen(buffer)-1] = '\0';
         if (strcmp(buffer, "exit") == 0)
             break;
+        
+        printf("%s\n", buffer);
+
+        
+
+        parse(buffer, &query);
+
+        
         // Here: parse SQL, check query, execute query
     } while (true);
 
