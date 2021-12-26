@@ -43,55 +43,40 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * for strings)
  * @param field_record the field value whose display length must be computed
  * @return the display length of the field
- *
+ */
 int field_record_length(field_record_t *field_record) {
     if (!field_record)
         return 0;
     switch (field_record->field_type)
     {
-    case TYPE_UNKNOWN:
-        return 0;
-        break;
-    
-    case TYPE_PRIMARY_KEY:
-
-        break;
-    
-    case TYPE_INTEGER:
-        int buffer = field_record->field_value.int_value;
-        int count = 0;
-        while(buffer > 0){
-        buffer = buffer/10;
-        count++;
-        }
-        return count;
-        break;
-    
-    case TYPE_FLOAT:
-        float buffer = field_record->field_value.float_value;
-        float int_count = 0;
-        float int_buffer = (int)buffer;
-        float decimal_buffer = buffer - int_buffer;
-
-        while(int_buffer > 0){
-        int_buffer = int_buffer/10;
-        int_count++;
-        }
-
-
-
-
-        break;
 
     case TYPE_TEXT:
         return strlen(field_record->field_value.text_value);
+        break;
+    
+    case TYPE_FLOAT:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%f", field_record->field_value.float_value);
+        return strlen(buffer);
+        break;
+
+    case TYPE_PRIMARY_KEY:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%d", field_record->field_value.primary_key_value);
+        return strlen(buffer);
+        break;
+    
+    case TYPE_INTEGER:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%d", field_record->field_value.primary_key_value);
+        return strlen(buffer);
         break;
 
     default:
         return 0;
         break;
     }
-}*/
+}
 
 /*!
  * @brief function display_table_record_list displays a select query result. It consists of 4 steps:
@@ -116,4 +101,15 @@ int field_record_length(field_record_t *field_record) {
   +----+-------+
  */
 void display_table_record_list(record_list_t *record_list) {
+
+    int table_size;
+    if (record_list != NULL) {
+        record_list_node_t *tmp = record_list->head;
+        while (tmp) {
+            record_list->head = tmp->next;
+            free(tmp);
+            tmp = record_list->head;
+        }
+        record_list->head = record_list->tail = NULL;
+    } 
 }
