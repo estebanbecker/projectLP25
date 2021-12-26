@@ -207,55 +207,34 @@ uint16_t compute_record_length(table_definition_t *definition) {
  * @return the offset of the free index in the index file.
  */
 uint32_t find_first_free_record(char *table_name) {
-    uint32_t offset = 0;
-    int activated=1, active=1;
-    long end;
-    FILE *file = open_index_file(table_name, "r+b");
+    index_record_t index_record = {.record_offset = 0, .record_length = 0};
+    uint8_t activate = 1;
+    int empty = 0;
 
-    fseek(file,0, SEEK_END);
-    end = ftell(file);
-    fseek(file,0, SEEK_SET);
+    FILE *idx = open_index_file(table_name, "rb+");
 
-    //if file is empty
-    if (ftell(file) == end){
-        int empty=0;
-        fwrite(&active, sizeof(uint8_t), 1, file);
-        fwrite(&empty, sizeof(uint32_t) + sizeof(uint16_t), 1, file);
-        fwrite("\n", sizeof(char), 1, file);
-        fclose(file);
-        return 0;
+    while (fread(&index_record.is_active, sizeof(uint8_t), 1, idx) == 1){
+        fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+        if (index_record.is_active){
+            fseek(idx, -5, SEEK_CUR);
+            fwrite(&activate, sizeof(uint8_t), 1, idx);
+
+            fclose(idx);
+            return index_record.record_offset;
+        }
+        fread(&index_record.record_length, sizeof(uint16_t), 1, idx);
+
+        //skip new line(1)
+        fseek(idx, 3, SEEK_CUR);
     }
 
-    //find free space or exit if arrive to end of file
-    while (activated && ftell(file) != end){
-        fread(&activated, sizeof(uint8_t), 1, file);
-        fseek(file, 7, SEEK_CUR);
-    }
-    //if free space found change active to 1
-    if (!activated){
-        fseek(file, -8, SEEK_CUR);
-        //change active to 1
-        fwrite(&active, sizeof(uint8_t), 1, file);
-        //get index
-        fread(&offset, sizeof(uint32_t), 1, file);
-    }else { //else get old size and offset and new offset is index + size
-        int size;
-        fseek(file, -7, SEEK_END);
-        //read size to get end of buffer
-        fread(&offset, sizeof(uint32_t), 1, file);;
-        fread(&size, sizeof(uint16_t), 1, file);
-        offset += size;
-        //skip \n
-        fseek(file, 1, SEEK_CUR);
-        //set to active
-        fwrite(&active, sizeof(uint8_t), 1, file);
-        //set everything to 0
-        fwrite(&offset, sizeof(uint32_t), 1, file);
-        fwrite(&size, sizeof(uint16_t ), 1, file);
-        fwrite("\n", sizeof(char), 1, file);
-    }
-    fclose(file);
-    return offset;
+    //if no free record found create a new one -> "1000000\n"
+    fwrite(&activate, sizeof(uint8_t), 1, idx);
+    fwrite(&empty, sizeof(uint16_t) + sizeof(uint32_t), 1, idx);
+    fwrite("\n", sizeof(char), 1, idx);
+
+    fclose(idx);
+    return index_record.record_offset + index_record.record_length;
 }
 
 /*!
