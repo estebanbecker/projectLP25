@@ -83,17 +83,11 @@ void create_table(create_query_t *table_definition) {
     if (!directory_exists(table_definition->table_name)){
         mkdir(table_definition->table_name, S_IRWXU);
 
-        int key_needed = false;
         char path_file_extension[TEXT_LENGTH];
         char path_file[TEXT_LENGTH];
-        uint16_t record_size;
-        uint32_t offset = 1;
-        uint8_t active = 1;
 
         //path to folder
         sprintf(path_file,"%s/%s", table_definition->table_name, table_definition->table_name);
-        //table size
-        record_size = compute_record_length(&table_definition->table_definition);
 
         //creation of table_name/table_name.def
         sprintf(path_file_extension, "%s.def",path_file);
@@ -104,9 +98,13 @@ void create_table(create_query_t *table_definition) {
             fprintf(def, "%u %s\n", table_definition->table_definition.definitions[field].column_type,
                     table_definition->table_definition.definitions[field].column_name);
 
-            //is creation of key table_name/table.key needed
+            //creation of key table_name/table.key if needed
             if (table_definition->table_definition.definitions[field].column_type == TYPE_PRIMARY_KEY) {
-                key_needed = true;
+                unsigned long long key_value=1;
+                sprintf(path_file_extension, "%s.key", path_file);
+                FILE *key = fopen(path_file_extension, "wb");
+                fwrite(&key_value, sizeof(unsigned long long), 1, key);
+                fclose(key);
             }
         }
         fclose(def);
@@ -121,14 +119,6 @@ void create_table(create_query_t *table_definition) {
         FILE *data = fopen(path_file_extension, "w");
         fclose(data);
 
-        //creation of table_name/table_name.key if needed
-        if (key_needed) {
-            unsigned long long key_value=1;
-            sprintf(path_file_extension, "%s.key", path_file);
-            FILE *key = fopen(path_file_extension, "wb");
-            fwrite(&key_value, sizeof(unsigned long long), 1, key);
-            fclose(key);
-        }
     }else {
         printf("table already exists \n");
     }
@@ -314,18 +304,18 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  * @return true if the record matches the filter, false else
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
-    //if filter is null or more values in filter than record then match is false
-    if (filter == NULL || filter->values.fields_count > record->fields_count){
+    //if filter is null
+    if (filter == NULL){
         return 0;
     }
 
     bool match;
     for (int filter_field = 0; filter_field < filter->values.fields_count; ++filter_field) {
         for (int record_field = 0; record_field < record->fields_count; ++record_field) {
-            if (filter->values.fields[filter_field].field_type == record->fields[record_field].field_type &&
-                strcmp(filter->values.fields[filter_field].column_name, record->fields[record_field].column_name) ==
-                0) {
-                printf("found same name same type\n");
+            //if same name and same type: check for same values
+            if (strcmp(filter->values.fields[filter_field].column_name, record->fields[record_field].column_name) == 0
+            && filter->values.fields[filter_field].field_type == record->fields[record_field].field_type) {
+                //check for same value
                 switch (filter->values.fields[filter_field].field_type) {
 
                     case TYPE_PRIMARY_KEY:
@@ -392,46 +382,6 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
  * @return a pointer to the first element of the resulting linked list. Shall be freed by the calling function
  */
 record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result) {
-    FILE *def = open_definition_file(table_name, "r");
-    FILE *idx = open_index_file(table_name, "rb");
-    FILE *data = open_content_file(table_name, "rb");
-
-    //get table definitnion
-    table_definition_t field_list;
-    get_table_definition(table_name, &field_list);
-
-    int active;
-    uint32_t offset;
-    table_record_t record;
-    record_list_t *temp_record_list = result;
-
-    while (fread(&active, sizeof(uint8_t), 1, idx) == 1){
-        //check if active
-        if (active == 1){
-            //get its offset
-            fread(&offset, sizeof(uint32_t), 1, idx);
-            //get records from field
-            get_table_record(table_name, offset, &field_list, &record);
-
-            //check if matching filter
-            if (is_matching_filter(&record, filter)){
-              temp_record_list->head->record = record;
-              //set next's previous value to current value
-              temp_record_list->head->next->previous = temp_record_list->head;
-              //set next's value to new temp_record_list
-              temp_record_list->head = temp_record_list->head->next;
-            }
-        }else {
-            //move to next line
-            fseek(idx, 7, SEEK_CUR);
-        }
-    }
-    //tail is last added value to temp_record_list
-    result->tail = temp_record_list->head;
-    fclose(def);
-    fclose(idx);
-    fclose(data);
-
     return result;
 }
 
@@ -444,30 +394,5 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
  * @return the pointer to to result if succeeded, NULL else.
  */
 table_record_t *get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result) {
-    FILE *file = open_content_file(table_name, "r");
-    if (ftell(file) == fseek(file, 0, SEEK_END)){
-        return NULL;
-    }
-    fseek(file, offset, SEEK_CUR);
-    result->fields_count = def->fields_count;
-    for (int field = 0; field < def->fields_count; ++field) {
-        strcpy(result->fields[field].column_name, def->definitions[field].column_name);
-        result->fields[field].field_type = def->definitions[field].column_type;
-        switch (result->fields[field].field_type) {
-            case TYPE_PRIMARY_KEY:
-                fread(&result->fields[field].field_value.primary_key_value, sizeof(uint32_t), 1,file);
-                break;
-            case TYPE_INTEGER:
-                fread(&result->fields[field].field_value.int_value, sizeof(uint32_t), 1,file);
-                break;
-            case TYPE_FLOAT:
-                fread(&result->fields[field].field_value.float_value, sizeof(uint32_t), 1,file);
-                break;
-            case TYPE_TEXT:
-                fread(&result->fields[field].field_value.text_value, sizeof(char ), TEXT_LENGTH,file);
-                break;
-        }
-    }
-    fclose(file);
     return result;
 }
