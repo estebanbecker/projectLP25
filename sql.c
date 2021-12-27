@@ -148,7 +148,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 
     int i = 0; //debugging
 
-    if(*sql='(') {
+    if(*sql=='(') {
         sql++;
     }
 
@@ -201,12 +201,14 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
     sql = get_sep_space(sql);
     if (*sql != '(') {
+        printf("Waiting for a fields list\n");
         return NULL;
     }
     sql++;
     while (*sql != ')') {
         sql = get_field_name(sql, result->definitions[result->fields_count].column_name);
         if (sql == NULL) {
+            printf("Error in a name of a field\n");
             return NULL;
         }else{
             sql = get_sep_space(sql);
@@ -227,6 +229,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
                 sql = get_keyword(sql, "int");
                 sql = get_sep_space(sql);
             }else{
+                printf("Error in the type of a field\n");
                 return NULL;
             }
         }
@@ -234,6 +237,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
         if (get_sep_space_and_char(sql, ',') != NULL ) {
             sql = get_sep_space_and_char(sql, ',');
         } else if (*sql != ')') {
+            printf("Error in the end of the fields list, waiting for a ')'\n");
             return NULL;
         }         
     }
@@ -251,21 +255,25 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
 char *parse_equality(char *sql, field_record_t *equality) {
 
     if (has_reached_sql_end(sql)) {
+        printf("Wainting for an equality condition\n");
         return NULL;
     }
 
     sql = get_field_name(sql, equality->column_name);
     if (sql==NULL) {
+        printf("Error in a name of a field in the equality condition\n");
         return NULL;
     }
     sql = get_sep_space_and_char(sql,'=');
 
     if (sql==NULL) {
+        printf("Error in the equality condition, winting for a '='\n");
         return NULL;
     }
 
     sql = get_field_name(sql, equality->field_value.text_value);
     if (sql==NULL) {
+        printf("Error in a value of a field in the equality condition\n");
         return NULL;
     } 
 
@@ -284,6 +292,7 @@ char *parse_equality(char *sql, field_record_t *equality) {
  */
 char *parse_set_clause(char *sql, table_record_t *result) {
     if (has_reached_sql_end(sql)) {
+        printf("Waiting for a set clause\n");
         return NULL;
     }
     sql = get_sep_space(sql);
@@ -313,6 +322,7 @@ char *parse_set_clause(char *sql, table_record_t *result) {
  */
 char *parse_where_clause(char *sql, filter_t *filter) {
     if (has_reached_sql_end(sql)) {
+        printf("Waiting for a where clause\n");
         return NULL;
     }
 
@@ -321,9 +331,11 @@ char *parse_where_clause(char *sql, filter_t *filter) {
         
         sql = parse_equality(sql, &filter->values.fields[filter->values.fields_count]);
         filter->values.fields_count++;
-
-        if (has_reached_sql_end(sql)) {
+        if(sql == NULL) {
             return NULL;
+        }
+        if (has_reached_sql_end(sql)) {
+            return sql;
         }else if (get_keyword(sql, "AND") != NULL) {
             
             sql = get_keyword(sql, "AND");
@@ -344,6 +356,7 @@ char *parse_where_clause(char *sql, filter_t *filter) {
             }
 
         }else{
+            printf("Error in the end of the where clause, waiting for a 'AND' or a 'OR'\n");
             return NULL;
         }
     }
@@ -361,9 +374,11 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  */
 query_result_t *parse(char *sql, query_result_t *result) {
     if(sql == NULL) {
+        printf("Error in the sql query\n");
         return NULL;
     }
     if(has_reached_sql_end(sql)){
+        printf("Error in the sql query\n");
         return NULL;
     }
 
@@ -389,10 +404,27 @@ query_result_t *parse(char *sql, query_result_t *result) {
         }else if (get_keyword(sql, "db") != NULL) {
             parse_drop_db(get_keyword(sql, "db"), result);
         }else{
+            printf("Error: drop command not recognized\n");
             return NULL;
         }
 
     }else{
+        printf("Error: Unknown query, you can use:\n");
+        
+        //Print all the sql query
+        printf("-CREATE TABLE\n");
+        printf("-INSERT\n");
+        printf("-SELECT\n");
+        printf("-UPDATE\n");
+        printf("-DELETE\n");
+        printf("-DROP TABLE\n");
+        printf("-DROP DATABASE\n");
+
+        return NULL;
+    }
+
+    if (result == NULL) {
+        printf("STOPPED BY ERROR\n");
         return NULL;
     }
     return result;
