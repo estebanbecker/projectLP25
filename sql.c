@@ -101,7 +101,7 @@ char *get_field_name(char *sql, char *field_name) {
         field_name[i-1] = '\0';
         return ++sql;
     }else{
-        while(isalnum(*sql)) {
+        while(isalnum(*sql) || *sql == '_') {
             field_name[i] = *sql;
             i++;
             sql++;
@@ -120,6 +120,9 @@ char *get_field_name(char *sql, char *field_name) {
  * @author @estebanbecker
  */
 bool has_reached_sql_end(char *sql) {
+    if(sql==NULL) {
+        return true;
+    }
     while (*sql == ' ') {
         sql++;
     }
@@ -145,11 +148,13 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
     char field[TEXT_LENGTH];
     bool continue_parsing = true;
     sql= get_sep_space(sql);
+    bool parenthesis_opened = false;
 
     int i = 0; //debugging
 
     if(*sql=='(') {
         sql++;
+        parenthesis_opened = true;
     }
 
     while (continue_parsing)
@@ -182,11 +187,13 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
     
     if(get_sep_space_and_char(sql, ')') != NULL) {
         sql = get_sep_space_and_char(sql, ')');
+        return sql;
+    }else if(!parenthesis_opened) {
+        return sql;
+    }else{
+        printf("Error: Expected ')'\n");
+        return NULL;
     }
-
-    return sql;
-    
-
 }
 
 /**
@@ -373,6 +380,7 @@ char *parse_where_clause(char *sql, filter_t *filter) {
  * @author @estebanbecker
  */
 query_result_t *parse(char *sql, query_result_t *result) {
+    bool error = false;
     if(sql == NULL) {
         printf("Error in the sql query\n");
         return NULL;
@@ -385,24 +393,36 @@ query_result_t *parse(char *sql, query_result_t *result) {
     sql= get_sep_space(sql);
 
     if (get_keyword(sql, "create table") != NULL) {
-        parse_create(get_keyword(sql, "create table"), result);
+        if(parse_create(get_keyword(sql, "create table"), result)==NULL){
+            error = true;
+        }
     }else if (get_keyword(sql, "insert") != NULL) {
-        parse_insert(get_keyword(sql, "insert"), result);
+        if(parse_insert(get_keyword(sql, "insert"), result)==NULL){
+            error = true;
+        }
     }else if (get_keyword(sql, "select") != NULL) {
-        parse_select(get_keyword(sql, "select"), result);
+        if(parse_select(get_keyword(sql, "select"), result)==NULL){
+            error = true;
+        }
     }else if (get_keyword(sql, "update") != NULL) {
-        parse_update(get_keyword(sql, "update"), result);
+        if(parse_update(get_keyword(sql, "update"), result)==NULL){
+            error = true;
+        }
     }else if (get_keyword(sql, "delete") != NULL) {
-        parse_delete(get_keyword(sql, "delete"), result);
+        if(parse_delete(get_keyword(sql, "delete"), result)==NULL){
+            error = true;
+        }
     }else if (get_keyword(sql, "drop") != NULL) {
         sql=get_keyword(sql, "drop");
         sql= get_sep_space(sql);
         if (get_keyword(sql, "table") != NULL) {
-            parse_drop_table(get_keyword(sql, "table"), result);
-        }else if (get_keyword(sql, "database") != NULL) {
-            parse_drop_db(get_keyword(sql, "database"), result);
-        }else if (get_keyword(sql, "db") != NULL) {
-            parse_drop_db(get_keyword(sql, "db"), result);
+            if(parse_drop_table(get_keyword(sql, "table"), result)==NULL){
+                error = true;
+            }
+        }else if (get_keyword(sql, "database") != NULL || get_keyword(sql, "database") != NULL) {
+            if(parse_drop_db(get_keyword(sql, "database"), result)==NULL){
+                error = true;
+            }
         }else{
             printf("Error: drop command not recognized\n");
             return NULL;
@@ -423,7 +443,7 @@ query_result_t *parse(char *sql, query_result_t *result) {
         return NULL;
     }
 
-    if (result == NULL) {
+    if (error==true) {
         printf("STOPPED BY ERROR\n");
         return NULL;
     }
@@ -449,6 +469,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
         result->query_content.select_query.set_clause.fields_count = 1;
         result->query_content.select_query.set_clause.fields[0].field_type = TYPE_UNKNOWN;
         strcpy(result->query_content.select_query.set_clause.fields[0].field_value.text_value, "*");
+        sql++;
     }else{
         sql = parse_fields_or_values_list(sql, &result->query_content.select_query.set_clause);
     }
@@ -470,6 +491,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
         }
 
     } else {
+        printf("Error: missing FROM keyword\n");
         return NULL;
     }
 
@@ -533,6 +555,10 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
         return NULL;
     }
     sql = get_keyword(sql, "into");
+    if(sql == NULL){
+        printf("Error: missing INTO keyword\n");
+        return NULL;
+    }
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
@@ -545,6 +571,10 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
         return NULL;
     }
     sql = get_keyword(sql, "values");
+    if(sql == NULL){
+        printf("Error: missing VALUES keyword\n");
+        return NULL;
+    }
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
@@ -577,7 +607,7 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
     if(has_reached_sql_end(sql)){
         return NULL;
     }
-    sql=parse_fields_or_values_list(sql, &result->query_content.update_query.set_clause);
+    sql=parse_set_clause(sql, &result->query_content.update_query.set_clause);
     if(has_reached_sql_end(sql)){
         return result;
     }

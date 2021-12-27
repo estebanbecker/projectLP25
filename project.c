@@ -31,7 +31,9 @@ int main(int argc, char *argv[]) {
         
         printf("%s\n", buffer);
 
-        parse(buffer, &query);
+        if(parse(buffer, &query) == NULL) {
+            continue;
+        }
 
         
         // Here: parse SQL, check query, execute query
