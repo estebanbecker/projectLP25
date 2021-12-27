@@ -250,32 +250,24 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
  */
 char *parse_equality(char *sql, field_record_t *equality) {
 
-    char field1[TEXT_LENGTH], field2[TEXT_LENGTH];
-
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
 
-    sql = get_field_name(sql, field1);
+    sql = get_field_name(sql, equality->column_name);
     if (sql==NULL) {
         return NULL;
     }
-    sql = get_sep_space(sql);
+    sql = get_sep_space_and_char(sql,'=');
 
-    if (get_keyword(sql, "=") != NULL) {
-        sql = get_keyword(sql, "=");
-        sql = get_sep_space(sql);
+    if (sql==NULL) {
+        return NULL;
     }
 
-    sql = get_field_name(sql, field2);
+    sql = get_field_name(sql, equality->field_value.text_value);
     if (sql==NULL) {
         return NULL;
     } 
-    sql = get_sep_space(sql);
-
-    strcpy(equality->field_value.text_value, field1);
-    strcat(equality->field_value.text_value, "=");
-    strcat(equality->field_value.text_value, field2);
 
     equality->field_type = TYPE_UNKNOWN;
 
@@ -538,6 +530,7 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql update query without UPDATE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @derreyann
  */
 query_result_t *parse_update(char *sql, query_result_t *result) {
     result -> query_type = QUERY_UPDATE;
@@ -578,6 +571,7 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
  * @param sql Pointer to the sql delete query without DELETE.
  * @param result Pointer to the data structure to modificate.
  * @return query_result_t* Return the data of the query
+ * @author @derreyann
  */
 query_result_t *parse_delete(char *sql, query_result_t *result) {
     result -> query_type = QUERY_DELETE;

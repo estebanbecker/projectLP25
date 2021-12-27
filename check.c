@@ -172,6 +172,8 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  */
 
 bool is_int(char *field) {
+
+    //to recode
     if(*field == '-') {
         field++;
     }
@@ -194,6 +196,8 @@ bool is_int(char *field) {
  * @author @estebanbecker
  */
 bool is_float(char *field) {
+
+    //to recode
     bool is_dot = false;
     while (*field != '\0') {
         if (!isdigit(*field) && *field != '.' ) {
@@ -217,6 +221,8 @@ bool is_float(char *field) {
  * @return true if value can be converted into a key, false if it cannot
  */
 bool is_key(char *value) {
+
+    //to recode
     while (*value != '\0') {
         if (!isdigit(*value)) {
             return false;
