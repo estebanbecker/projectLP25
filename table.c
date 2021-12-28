@@ -250,36 +250,26 @@ void add_row_to_table(char *table_name, table_record_t *record) {
     char buffer[index_record.record_length];
     strcpy(buffer, "");
 
-    if (format_row(buffer, &table_definition, record)) {
-        FILE *data = open_content_file(table_name, "r+");
-        if (data) {
-            //go to offset and write buffer
-            fseek(data, index_record.record_offset, SEEK_SET);
-            fprintf(data, "%s", buffer);
-            fclose(data);
+    if (write_record(table_name, index_record.record_offset, &table_definition, record)){
+        FILE *idx = open_index_file(table_name, "rb+");
+        if (idx) {
+            uint16_t last_size;
 
-            FILE *idx = open_index_file(table_name, "rb+");
-            if (idx) {
-                uint16_t last_size;
+            fseek(idx, -3, SEEK_END);
+            fread(&last_size, sizeof(uint16_t), 1, idx);
 
-                fseek(idx, -3, SEEK_END);
-                fread(&last_size, sizeof(uint16_t), 1, idx);
-
-                //complete if new record was created
-                if (last_size == 0) {
-                    fseek(idx, -6, SEEK_CUR);
-                    fwrite(&index_record.record_offset, sizeof(uint32_t), 1, idx);
-                    fwrite(&index_record.record_length, sizeof(uint16_t), 1, idx);
-                }
-                fclose(idx);
-            }else{
-                printf("ERROR: could not open index file\n");
+            //complete if new record was created
+            if (last_size == 0) {
+                fseek(idx, -6, SEEK_CUR);
+                fwrite(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+                fwrite(&index_record.record_length, sizeof(uint16_t), 1, idx);
             }
-        }else {
-            printf("ERROR: could not open data file\n");
+            fclose(idx);
+        }else{
+            printf("ERROR: could not open index file\n");
         }
     }else {
-        printf("could not convert to buffer\n");
+        printf("ERROR: could not write in data\n");
     }
 }
 
@@ -291,26 +281,36 @@ void add_row_to_table(char *table_name, table_record_t *record) {
  * @param record the record to write
  * @return a pointer to buffer in case of success, NULL else.
  */
-char *format_row(char *buffer, table_definition_t *table_definition, table_record_t *record) {
-    for (int field = 0; field < table_definition->fields_count; ++field) {
-        field_record_t *field_record = find_field_in_table_record(table_definition->definitions[field].column_name, record);
-        switch (field_record->field_type) {
-            case TYPE_PRIMARY_KEY:
-                sprintf(buffer, "%s%8llo", buffer, field_record->field_value.primary_key_value);
-                break;
-            case TYPE_INTEGER:
-                sprintf(buffer, "%s%8llo", buffer, field_record->field_value.int_value);
-                break;
-            case TYPE_FLOAT:
-                sprintf(buffer, "%s%8of", buffer, field_record->field_value.float_value);
-                break;
-            case TYPE_TEXT:
-                sprintf(buffer, "%s%s", buffer, field_record->field_value.text_value);
-                break;
-        }
+bool write_record(char *table_name, uint32_t offset, table_definition_t *table_definition, table_record_t *record) {
 
+    FILE *data = open_content_file(table_name, "ab");
+    if (data){
+        fseek(data, offset, SEEK_SET);
+        field_record_t *record_def;
+
+        for (int definition = 0; definition < table_definition->fields_count; ++definition) {
+            record_def = find_field_in_table_record(table_definition->definitions[definition].column_name, record);
+            printf("champ found\n");
+            switch (record_def->field_type) {
+
+                case TYPE_PRIMARY_KEY:
+                    fwrite(&record_def->field_value.primary_key_value, sizeof(uint64_t), 1, data);
+                    break;
+                case TYPE_INTEGER:
+                    fwrite(&record_def->field_value.int_value, sizeof(uint64_t), 1, data);
+                    break;
+                case TYPE_FLOAT:
+                    fwrite(&record_def->field_value.float_value, sizeof(uint64_t), 1, data);
+                    break;
+                case TYPE_TEXT:
+                    fwrite(&record_def->field_value.text_value, sizeof(char), TEXT_LENGTH, data);
+                    break;
+            }
+        }
+        fclose(data);
+        return true;
     }
-    return buffer;
+    return false;
 }
 
 /*!
@@ -376,49 +376,42 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
 
     bool match;
     for (int filter_field = 0; filter_field < filter->values.fields_count; ++filter_field) {
-        for (int record_field = 0; record_field < record->fields_count; ++record_field) {
-            //if same name and same type: check for same values
-            if (strcmp(filter->values.fields[filter_field].column_name, record->fields[record_field].column_name) == 0
-            && filter->values.fields[filter_field].field_type == record->fields[record_field].field_type) {
-                //check for same value
-                switch (filter->values.fields[filter_field].field_type) {
+        field_record_t *record_field = find_field_in_table_record(filter->values.fields[filter_field].column_name, record);
+        //if same type: check for same values
+        if (filter->values.fields[filter_field].field_type == record_field->field_type) {
+            //check for same value
+            switch (record_field->field_type) {
 
-                    case TYPE_PRIMARY_KEY:
-                        if (filter->values.fields[filter_field].field_value.primary_key_value ==
-                            record->fields[record_field].field_value.primary_key_value) {
-                            match = true;
-                            record_field = record->fields_count;
-                        } else {
-                            match = false;
-                        }
-                        break;
-                    case TYPE_INTEGER:
-                        if (filter->values.fields[filter_field].field_value.int_value ==
-                            record->fields[record_field].field_value.int_value) {
-                            match = true;
-                            record_field = record->fields_count;
-                        } else {
-                            match = false;
-                        }
-                        break;
-                    case TYPE_FLOAT:
-                        if (filter->values.fields[filter_field].field_value.float_value ==
-                            record->fields[record_field].field_value.float_value) {
-                            match = true;
-                            record_field = record->fields_count;
-                        } else {
-                            match = false;
-                        }
-                        break;
-                    case TYPE_TEXT:
-                        if (strcmp(filter->values.fields[filter_field].field_value.text_value,
-                                   record->fields[record_field].field_value.text_value) == 0) {
-                            match = true;
-                            record_field = record->fields_count;
-                        } else {
-                            match = false;
-                        }
-                        break;
+                case TYPE_PRIMARY_KEY:
+                    if (filter->values.fields[filter_field].field_value.primary_key_value == record_field->field_value.primary_key_value){
+                        match = true;
+                    } else {
+                        match = false;
+                    }
+                    break;
+                case TYPE_INTEGER:
+                    if (filter->values.fields[filter_field].field_value.int_value == record_field->field_value.int_value) {
+                        match = true;
+                    } else {
+                        match = false;
+                    }
+                    break;
+                case TYPE_FLOAT:
+                    if (filter->values.fields[filter_field].field_value.float_value ==
+                        record_field->field_value.float_value) {
+                        match = true;
+                    } else {
+                        match = false;
+                    }
+                    break;
+                case TYPE_TEXT:
+                    if (strcmp(filter->values.fields[filter_field].field_value.text_value,
+                               record_field->field_value.text_value) == 0) {
+                        match = true;
+                    } else {
+                        match = false;
+                    }
+                    break;
                 }
             } else {
                 match = false;
@@ -429,7 +422,6 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
         }else if (filter->logic_operator == OP_AND && match == false){
             return false;
         }
-    }
     if (filter->logic_operator == OP_OR){
         return false;
     }else if (filter->logic_operator == OP_AND){
@@ -459,5 +451,31 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
  * @return the pointer to to result if succeeded, NULL else.
  */
 table_record_t *get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result) {
+
+    result->fields_count = def->fields_count;
+    FILE *data = open_content_file(table_name, "rb");
+
+    fseek(data, offset, SEEK_SET);
+    for (int definition = 0; definition < def->fields_count; ++definition) {
+        strcpy(result->fields[definition].column_name, def->definitions[definition].column_name);
+        result->fields[definition].field_type = def->definitions[definition].column_type;
+        switch (result->fields[definition].field_type) {
+
+            case TYPE_PRIMARY_KEY:
+                fread(&result->fields[definition].field_value.primary_key_value, sizeof(uint64_t), 1, data);
+                break;
+            case TYPE_INTEGER:
+                fread(&result->fields[definition].field_value.int_value, sizeof(uint64_t), 1, data);
+                break;
+            case TYPE_FLOAT:
+                fread(&result->fields[definition].field_value.float_value, sizeof(uint64_t), 1, data);
+                break;
+            case TYPE_TEXT:
+                fread(&result->fields[definition].field_value.text_value, sizeof(char ), TEXT_LENGTH, data);
+                break;
+        }
+    }
+
+    fclose(data);
     return result;
 }
