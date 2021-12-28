@@ -123,9 +123,7 @@ bool has_reached_sql_end(char *sql) {
     if(sql==NULL) {
         return true;
     }
-    while (*sql == ' ') {
-        sql++;
-    }
+    sql=get_sep_space(sql);
     if (*sql == '\0' || *sql == ';') {
         return true;
     }else{
