@@ -20,6 +20,7 @@ char *get_sep_space(char *sql) {
     /*if(!isspace(*sql)) {
         printf("Use less \n");
     }*/
+    //debug code
     while(isspace(*sql)) {
         sql++;
     }
@@ -40,11 +41,13 @@ char *get_sep_space(char *sql) {
  */
 char *get_sep_space_and_char(char *sql, char c) {
     sql = get_sep_space(sql);
+    //check if the character is present
     if (*sql == c) {
         sql++;
     }else{
         return NULL;
     }
+
     sql=get_sep_space(sql);
     return sql;
 }
@@ -60,16 +63,18 @@ char *get_sep_space_and_char(char *sql, char c) {
  * @author @estebanbecker
  */
 char *get_keyword(char *sql, char *keyword) {
-    int valid = 1;
+    bool valid = true;
+
     sql=get_sep_space(sql);
+
+    //check if the keyword is present
     while(valid && *keyword != '\0') {
         if (tolower(*sql) != tolower(*keyword)) {
-            valid = 0;
+            valid = false;
         }
         sql++;
         keyword++;
     }
-    sql=get_sep_space(sql);
     if (valid) {
         return sql;
     }else{
@@ -90,6 +95,8 @@ char *get_keyword(char *sql, char *keyword) {
 char *get_field_name(char *sql, char *field_name) {
     int i = 0;
     sql=get_sep_space(sql);
+
+    //if there is a ' character the field name is between ' and '
     if (*sql== '\'') {
         i++;
         sql++;
@@ -101,6 +108,7 @@ char *get_field_name(char *sql, char *field_name) {
         field_name[i-1] = '\0';
         return ++sql;
     }else{
+        //if there is not a ' character the field name continues until the next non alphanumeric character or _
         while(isalnum(*sql) || *sql == '_') {
             field_name[i] = *sql;
             i++;
@@ -120,10 +128,13 @@ char *get_field_name(char *sql, char *field_name) {
  * @author @estebanbecker
  */
 bool has_reached_sql_end(char *sql) {
+
     if(sql==NULL) {
         return true;
     }
+
     sql=get_sep_space(sql);
+
     if (*sql == '\0' || *sql == ';') {
         return true;
     }else{
@@ -144,12 +155,13 @@ bool has_reached_sql_end(char *sql) {
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
     
     char field[TEXT_LENGTH];
+
     bool continue_parsing = true;
-    sql= get_sep_space(sql);
     bool parenthesis_opened = false;
 
-    int i = 0; //debugging
+    sql= get_sep_space(sql);
 
+    //If there is a parenthesis, the list of values or fields names is between parenthesis
     if(*sql=='(') {
         sql++;
         parenthesis_opened = true;
@@ -157,39 +169,58 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 
     while (continue_parsing)
     {
-        i++;
         if (has_reached_sql_end(sql)) {
             continue_parsing = false;
         }else{
             sql= get_field_name(sql, field);
-            if (is_int(field)) {
+
+            //check the type of the field and add it to the list
+            if(is_key(field)) {
+
+                result->fields[result->fields_count].field_type = TYPE_PRIMARY_KEY;
+                result->fields[result->fields_count].field_value.primary_key_value = atoi(field);
+
+            }else if (is_int(field)) {
+
                 result->fields[result->fields_count].field_type = TYPE_INTEGER;
                 result->fields[result->fields_count].field_value.int_value = atoi(field);
+
             }else if (is_float(field)) {
+
                 result->fields[result->fields_count].field_type = TYPE_FLOAT;
                 result->fields[result->fields_count].field_value.float_value = atof(field);
+
             }else{
+
                 result->fields[result->fields_count].field_type = TYPE_TEXT;
                 strcpy(result->fields[result->fields_count].field_value.text_value, field);
+
             }
             result->fields_count++;
-            if (get_sep_space_and_char(sql, ',') != NULL && get_sep_space_and_char(sql, ')') == NULL) {
+
+            //if there is a comma, the list of values or fields names continues, otherwise it is the end of the list
+            if (get_sep_space_and_char(sql, ',') != NULL) {
                 sql = get_sep_space_and_char(sql, ',');
             } else {
                 continue_parsing = false;
             }
+
         }
         
-
     }
     
-    if(get_sep_space_and_char(sql, ')') != NULL) {
+    //if there is a parenthesis, the list of values or fields names must end with a parenthesis
+
+    if(get_sep_space_and_char(sql, ')') != NULL && parenthesis_opened) {
         sql = get_sep_space_and_char(sql, ')');
         return sql;
-    }else if(!parenthesis_opened) {
+    }else if (!parenthesis_opened) {
         return sql;
-    }else{
+    }else if (parenthesis_opened) {
         printf("Error: Expected ')'\n");
+        return NULL;
+    }else{
+        printf("Error: Unexpected ')'\n");
         return NULL;
     }
 }
@@ -204,46 +235,83 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
  * @author @estebanbecker
  */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
+
     sql = get_sep_space(sql);
+
+    if(has_reached_sql_end(sql)) {
+        printf("Waiting for a fields list\n");
+        return NULL;
+    }
+
+    //The field definition is between parenthesis
     if (*sql != '(') {
         printf("Waiting for a fields list\n");
         return NULL;
     }
     sql++;
+
+    if(has_reached_sql_end(sql)) {
+        printf("Waiting for a fields list\n");
+        return NULL;
+    }
     while (*sql != ')') {
+
+        //Get de field name
         sql = get_field_name(sql, result->definitions[result->fields_count].column_name);
+
+        if(has_reached_sql_end(sql)) {
+            printf("Error in field list\n");
+            return NULL;
+        }
+
         if (sql == NULL) {
             printf("Error in a name of a field\n");
             return NULL;
         }else{
+            //Get the type of the field
+
             sql = get_sep_space(sql);
+
             if (get_keyword(sql, "primary key") != NULL) {
+
                 result->definitions[result->fields_count].column_type = TYPE_PRIMARY_KEY;
                 sql = get_keyword(sql, "primary key");
-                sql = get_sep_space(sql);
+
             }else if (get_keyword(sql, "text") != NULL) {
+
                 result->definitions[result->fields_count].column_type = TYPE_TEXT;
                 sql = get_keyword(sql, "text");
-                sql = get_sep_space(sql);
+
             }else if (get_keyword(sql, "float") != NULL) {
+
                 result->definitions[result->fields_count].column_type = TYPE_FLOAT;
                 sql = get_keyword(sql, "float");
-                sql = get_sep_space(sql);
+
             }else if (get_keyword(sql, "int") != NULL) {
+
                 result->definitions[result->fields_count].column_type = TYPE_INTEGER;
-                sql = get_keyword(sql, "int");
-                sql = get_sep_space(sql);
+                sql = get_keyword(sql, "int");                
+
             }else{
+
                 printf("Error in the type of a field\n");
                 return NULL;
+
             }
+            sql = get_sep_space(sql);
         }
         result->fields_count++;
+
+        //If there is a comma, the list of fields continues, otherwise it is the end of the list
         if (get_sep_space_and_char(sql, ',') != NULL ) {
+
             sql = get_sep_space_and_char(sql, ',');
+
         } else if (*sql != ')') {
+
             printf("Error in the end of the fields list, waiting for a ')'\n");
             return NULL;
+
         }         
     }
     return ++sql;
@@ -263,19 +331,20 @@ char *parse_equality(char *sql, field_record_t *equality) {
         printf("Wainting for an equality condition\n");
         return NULL;
     }
-
+    //look for the field name
     sql = get_field_name(sql, equality->column_name);
     if (sql==NULL) {
         printf("Error in a name of a field in the equality condition\n");
         return NULL;
     }
+    //look for the operator
     sql = get_sep_space_and_char(sql,'=');
 
     if (sql==NULL) {
         printf("Error in the equality condition, winting for a '='\n");
         return NULL;
     }
-
+    //look for the value
     sql = get_field_name(sql, equality->field_value.text_value);
     if (sql==NULL) {
         printf("Error in a value of a field in the equality condition\n");
@@ -296,6 +365,7 @@ char *parse_equality(char *sql, field_record_t *equality) {
  * @author @estebanbecker
  */
 char *parse_set_clause(char *sql, table_record_t *result) {
+
     if (has_reached_sql_end(sql)) {
         printf("Waiting for a set clause\n");
         return NULL;
@@ -303,15 +373,23 @@ char *parse_set_clause(char *sql, table_record_t *result) {
     sql = get_sep_space(sql);
 
     while (!has_reached_sql_end(sql)) {
+
         sql = parse_equality(sql, &result->fields[result->fields_count]);
+
         if (sql == NULL) {
             return NULL;
         }
+
         result->fields_count++;
+
         if (get_sep_space_and_char(sql, ',') != NULL) {
+
             sql = get_sep_space_and_char(sql, ',');
+
         } else {
+
             return sql;
+
         }
     }
     return sql;    
@@ -457,6 +535,11 @@ query_result_t *parse(char *sql, query_result_t *result) {
  * @author @estebanbecker
  */
 query_result_t *parse_select(char *sql, query_result_t *result) {
+
+    //intialize the result
+    result->query_content.select_query.set_clause.fields_count = 0;
+    result->query_content.select_query.where_clause.values.fields_count = 0;
+
     //Get the colomns names
     result->query_type = QUERY_SELECT;
     if (has_reached_sql_end(sql)) {
@@ -521,6 +604,10 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
  * @author @estebanbecker
  */
 query_result_t *parse_create(char *sql, query_result_t *result) {
+
+    //intialize the result
+    result->query_content.create_query.table_definition.fields_count = 0;
+
     result->query_type = QUERY_CREATE_TABLE;
     if (has_reached_sql_end(sql)) {
         return NULL;
@@ -548,6 +635,11 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
  * @author @estebanbecker
  */
 query_result_t *parse_insert(char *sql, query_result_t *result) {
+
+    //intialize the result
+    result->query_content.insert_query.fields_values.fields_count = 0;
+    result->query_content.insert_query.fields_names.fields_count = 0;
+
     result->query_type = QUERY_INSERT;
     if (has_reached_sql_end(sql)) {
         return NULL;
@@ -565,15 +657,20 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
         return NULL;
     }
     
-    if(parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names)==NULL){
-        result->query_content.insert_query.fields_names.fields_count = 1;
-        result->query_content.insert_query.fields_names.fields[0].field_type = TYPE_UNKNOWN;
-        strcpy(result->query_content.insert_query.fields_names.fields[0].field_value.text_value, "*");
-    }else{
+    if(get_keyword(sql, "values") == NULL){
+
         sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
+
         if (has_reached_sql_end(sql)) {
             return NULL;
         }
+    
+    }else{
+
+        result->query_content.insert_query.fields_names.fields_count = 1;
+        result->query_content.insert_query.fields_names.fields[0].field_type = TYPE_UNKNOWN;
+        strcpy(result->query_content.insert_query.fields_names.fields[0].field_value.text_value, "*");
+
     }
     sql = get_keyword(sql, "values");
     if(sql == NULL){
@@ -600,6 +697,11 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
  * @author @derreyann
  */
 query_result_t *parse_update(char *sql, query_result_t *result) {
+
+    //intialize the result
+    result->query_content.update_query.set_clause.fields_count = 0;
+    result->query_content.update_query.where_clause.values.fields_count = 0;
+
     result -> query_type = QUERY_UPDATE;
     if(has_reached_sql_end(sql)){
             return NULL;
@@ -641,6 +743,10 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
  * @author @derreyann
  */
 query_result_t *parse_delete(char *sql, query_result_t *result) {
+
+    //intialize the result
+    result->query_content.delete_query.where_clause.values.fields_count = 0;
+    
     result -> query_type = QUERY_DELETE;
         if(has_reached_sql_end(sql)){
             return NULL;
