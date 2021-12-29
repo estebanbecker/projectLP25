@@ -25,7 +25,10 @@ int main(int argc, char *argv[]) {
     table.table_definition.definitions[1].column_type = TYPE_PRIMARY_KEY;
     create_query_t *ptable = &table;
 
+    
     char buffer[SQL_COMMAND_MAX_SIZE];
+    query_result_t query;
+    
     do {
         printf("> ");
         fflush(stdin);
@@ -34,6 +37,14 @@ int main(int argc, char *argv[]) {
         buffer[strlen(buffer)-1] = '\0';
         if (strcmp(buffer, "exit") == 0)
             break;
+        
+        printf("%s\n", buffer);
+
+        if(parse(buffer, &query) == NULL) {
+            continue;
+        }
+
+        
         // Here: parse SQL, check query, execute query
         if (strcmp(buffer, "drop") == 0)
             drop_table("test");

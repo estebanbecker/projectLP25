@@ -12,3 +12,8 @@ table.o
 .vscode/
 CMakeLists.txt
 cmake-build-debug/
+.vscode/tasks.json
+.vscode/launch.json
+CMakeLists.txt
+build
+main.cpp
