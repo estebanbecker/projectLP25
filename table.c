@@ -290,7 +290,6 @@ bool write_record(char *table_name, uint32_t offset, table_definition_t *table_d
 
         for (int definition = 0; definition < table_definition->fields_count; ++definition) {
             record_def = find_field_in_table_record(table_definition->definitions[definition].column_name, record);
-            printf("champ found\n");
             switch (record_def->field_type) {
 
                 case TYPE_PRIMARY_KEY:
@@ -365,13 +364,13 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  * i.e. conditions in the filter are verified by the record. The filter contains one or more equalities to check.
  * Tests are all following a single AND or OR logical operator.
  * @param record the record to be checked
- * @param filter the filter to check against (a NULL filter means no filtering must be done -> returns 0)
+ * @param filter the filter to check against (a NULL filter means no filtering must be done -> returns 1)
  * @return true if the record matches the filter, false else
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
     //if filter is null
     if (filter == NULL){
-        return 0;
+        return true;
     }
 
     bool match;
@@ -439,6 +438,42 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
  * @return a pointer to the first element of the resulting linked list. Shall be freed by the calling function
  */
 record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result) {
+    FILE *idx = open_index_file(table_name, "rb");
+
+    if (idx){
+        index_record_t index_record;
+        table_definition_t table_definitions;
+        table_record_t record;
+        table_record_t result_record;
+
+        get_table_definition(table_name, &table_definitions);
+
+        //read index to look through all active records
+        while (fread(&index_record.is_active, sizeof(uint8_t), 1, idx) == 1) {
+            if (index_record.is_active) {
+                fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+                get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
+
+                if (is_matching_filter(&record, filter)) {
+                    //add values to required fields
+                    for (int num_required_field = 0;
+                         num_required_field < required_fields->fields_count; ++num_required_field) {
+                        result_record.fields[num_required_field] = *(find_field_in_table_record(required_fields->fields[num_required_field].column_name, &record));
+                        result_record.fields_count = num_required_field;
+                    }
+                    result_record.fields_count++;
+
+                    add_record(result, required_fields);
+                }
+                fseek(idx, 3, SEEK_CUR);
+            } else {
+                fseek(idx, 7, SEEK_CUR);
+            }
+        }
+
+        fclose(idx);
+    }
+
     return result;
 }
 
