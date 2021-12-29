@@ -8,6 +8,7 @@
  * @brief Expand the query result to have all the fiel of the table
  * 
  * @param query Querry to expand
+ * @author @estebanbecker
  */
 void expand(query_result_t *query) {
     if (query->query_type == QUERY_SELECT) {
@@ -21,22 +22,95 @@ void expand(query_result_t *query) {
  * @brief Exand a select query to have all the fields of the table
  * 
  * @param query Select query to expand
+ * @author @estebanbecker
  */
 void expand_select(update_or_select_query_t *query) {
+    if(query->set_clause.fields_count == 1 && query->set_clause.fields[0].field_type == TYPE_UNKNOWN && strcmp(query->set_clause.fields[0].field_value.text_value,"*") == 0) {
+        query->set_clause.fields_count = 0;
+        table_definition_t table;
+        
+        get_table_definition(query->table_name, &table);
+
+        for (int i = 0; i < table.fields_count; i++) {
+            strcpy(query->set_clause.fields[i].field_value.text_value , table.definitions[i].column_name);
+            
+            query->set_clause.fields_count++;
+        }
+    }
 }
 
 /**
  * @brief Expand an insert query to have all the fields of the table
  * 
  * @param query Insert query to expand
+ * @author @estebanbecker
  */
 void expand_insert(insert_query_t *query) {
+
+    table_definition_t table;
+    
+    get_table_definition(query->table_name, &table);
+
+    if(query->fields_names.fields_count == 1 && query->fields_names.fields[0].field_type == TYPE_UNKNOWN && strcmp(query->fields_names.fields[0].field_value.text_value,"*") == 0) {
+        query->fields_names.fields_count = 0;
+
+        for (int i = 0; i < table.fields_count; i++) {
+            strcpy(query->fields_names.fields[i].field_value.text_value , table.definitions[i].column_name);
+            
+            query->fields_names.fields_count++;
+        }
+    }else{
+        for (int i = 0; i < table.fields_count; i++) {
+            if(!is_field_in_record(&query->fields_names, table.definitions[i].column_name)) {
+                strcpy(query->fields_names.fields[query->fields_names.fields_count].field_value.text_value , table.definitions[i].column_name);
+                query->fields_values.fields[query->fields_names.fields_count].field_type = table.definitions[i].column_type;
+                make_default_value(&query->fields_values.fields[query->fields_names.fields_count],query->table_name);
+                query->fields_names.fields_count++;
+            }
+        }
+    }
 }
 
+/**
+ * @brief 
+ * 
+ * @param record record to check
+ * @param field_name field name to search
+ * @return true is in the record
+ * @return false is not in the record
+ * @author @estebanbecker
+ */
 bool is_field_in_record(table_record_t *record, char *field_name) {
+    for (int i = 0; i < record->fields_count; i++) {
+        if (strcmp(record->fields[i].field_value.text_value, field_name) == 0) {
+            return true;
+        }
+    }
     return false;
 }
 
-
+/**
+ * @brief Put the default value of the field in the record
+ * 
+ * @param field field to modify
+ * @param table_name table name
+ * @author @estebanbecker
+ */
 void make_default_value(field_record_t *field, char *table_name) {
+    switch (field->field_type) {
+        case TYPE_INTEGER:
+            field->field_value.int_value = 0;
+            break;
+        case TYPE_TEXT:
+            strcpy(field->field_value.text_value, "");
+            break;
+        
+        case TYPE_FLOAT:
+            field->field_value.float_value = 0;
+            break;
+        case TYPE_PRIMARY_KEY:
+            field->field_value.primary_key_value = get_next_key(table_name);
+            break;
+    }
 }
+

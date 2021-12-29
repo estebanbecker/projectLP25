@@ -564,9 +564,16 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
-    sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
-    if (has_reached_sql_end(sql)) {
-        return NULL;
+    
+    if(parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names)==NULL){
+        result->query_content.insert_query.fields_names.fields_count = 1;
+        result->query_content.insert_query.fields_names.fields[0].field_type = TYPE_UNKNOWN;
+        strcpy(result->query_content.insert_query.fields_names.fields[0].field_value.text_value, "*");
+    }else{
+        sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
+        if (has_reached_sql_end(sql)) {
+            return NULL;
+        }
     }
     sql = get_keyword(sql, "values");
     if(sql == NULL){
