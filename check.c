@@ -9,6 +9,7 @@
 #include <linux/limits.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <stdlib.h>
 #include <errno.h>
 
 
