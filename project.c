@@ -43,7 +43,11 @@ int main(int argc, char *argv[]) {
         if(parse(buffer, &query) == NULL) {
             continue;
         }
+        //here check if the query is valid
 
+        expand(&query);
+
+        //here execute the query
         
         // Here: parse SQL, check query, execute query
         if (strcmp(buffer, "drop") == 0)
@@ -52,6 +56,7 @@ int main(int argc, char *argv[]) {
             create_table(ptable);
         if (strcmp(buffer, "free idx") == 0)
             printf("free index: %d\n", find_first_free_record("test"));
+
     } while (true);
 
     return 0;
