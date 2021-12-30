@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 /**
  * @brief Get the first occurrence of a non space character in a string.
@@ -110,7 +111,7 @@ char *get_field_name(char *sql, char *field_name) {
         return ++sql;
     }else{
         //if there is not a ' character the field name continues until the next non alphanumeric character or _
-        while(isalnum(*sql) || *sql == '_') {
+        while(isalnum(*sql) || *sql == '_' || *sql == '.' || *sql == '-') {
             field_name[i] = *sql;
             i++;
             sql++;
@@ -176,27 +177,10 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
             sql= get_field_name(sql, field);
 
             //check the type of the field and add it to the list
-            if(is_key(field)) {
 
-                result->fields[result->fields_count].field_type = TYPE_PRIMARY_KEY;
-                result->fields[result->fields_count].field_value.primary_key_value = atoi(field);
+            result->fields[result->fields_count].field_type = TYPE_UNKNOWN;
+            strcpy(result->fields[result->fields_count].field_value.text_value, field);
 
-            }else if (is_int(field)) {
-
-                result->fields[result->fields_count].field_type = TYPE_INTEGER;
-                result->fields[result->fields_count].field_value.int_value = atoi(field);
-
-            }else if (is_float(field)) {
-
-                result->fields[result->fields_count].field_type = TYPE_FLOAT;
-                result->fields[result->fields_count].field_value.float_value = atof(field);
-
-            }else{
-
-                result->fields[result->fields_count].field_type = TYPE_TEXT;
-                strcpy(result->fields[result->fields_count].field_value.text_value, field);
-
-            }
             result->fields_count++;
 
             //if there is a comma, the list of values or fields names continues, otherwise it is the end of the list

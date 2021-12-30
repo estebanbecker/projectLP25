@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <linux/limits.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include "table.h"
 
@@ -173,15 +175,13 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
 
 bool is_int(char *field) {
 
-    //to recode
-    if(*field == '-') {
-        field++;
-    }
-    while (*field != '\0') {
-        if (!isdigit(*field)) {
-            return false;
-        }
-        field++;
+    char *endptr;
+    long long int value;
+
+    value = strtoll(field, &endptr, 10);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
@@ -197,19 +197,13 @@ bool is_int(char *field) {
  */
 bool is_float(char *field) {
 
-    //to recode
-    bool is_dot = false;
-    while (*field != '\0') {
-        if (!isdigit(*field) && *field != '.' ) {
-            return false;
-        }
-        if (*field == '.') {
-            if (is_dot) {
-                return false;
-            }
-            is_dot = true;
-        }
-    field++;
+    char *endptr;
+    double value;
+
+    value = strtod(field, &endptr);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
@@ -222,12 +216,13 @@ bool is_float(char *field) {
  */
 bool is_key(char *value) {
 
-    //to recode
-    while (*value != '\0') {
-        if (!isdigit(*value)) {
-            return false;
-        }
-        value++;
+    char *endptr;
+    unsigned long long int key;
+
+    key = strtoull(value, &endptr, 10);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
