@@ -533,7 +533,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
     sql = get_sep_space(sql);
     if(get_keyword(sql, "*") != NULL){
         result->query_content.select_query.set_clause.fields_count = 1;
-        result->query_content.select_query.set_clause.fields[0].field_type = TYPE_UNKNOWN;
+        result->query_content.select_query.set_clause.fields[0].field_type = TYPE_TEXT;
         strcpy(result->query_content.select_query.set_clause.fields[0].field_value.text_value, "*");
         sql++;
     }else{
@@ -653,7 +653,7 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
     }else{
 
         result->query_content.insert_query.fields_names.fields_count = 1;
-        result->query_content.insert_query.fields_names.fields[0].field_type = TYPE_UNKNOWN;
+        result->query_content.insert_query.fields_names.fields[0].field_type = TYPE_TEXT;
         strcpy(result->query_content.insert_query.fields_names.fields[0].field_value.text_value, "*");
 
     }

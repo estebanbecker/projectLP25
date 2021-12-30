@@ -7,6 +7,7 @@
 #include "sql.h"
 #include "table.h"
 #include "check.h"
+#include "expand.h"
 
 #define SQL_COMMAND_MAX_SIZE 1500
 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
         }
         //here check if the query is valid
 
-        //expand(&query);
+        expand(&query);
 
         //here execute the query
 
