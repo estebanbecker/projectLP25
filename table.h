@@ -29,7 +29,7 @@ uint16_t compute_record_length(table_definition_t *definition);
 uint32_t find_first_free_record(char *table_name);
 
 void add_row_to_table(char *table_name, table_record_t *record);
-char *format_row(char *table_name, char *buffer, table_definition_t *table_definition, table_record_t *record);
+bool write_record(char *table_name, uint32_t offset, table_definition_t *table_definition, table_record_t *record);
 void update_key(char *table_name, unsigned long long value);
 unsigned long long get_next_key(char *table_name);
 
