@@ -3,13 +3,14 @@
 //
 
 #include "check.h"
-
+#include "table.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <linux/limits.h>
 #include <ctype.h>
 #include <dirent.h>
-#include "table.h"
+#include <errno.h>
+
 
 /*!
  * @brief function check_query is the high level check function, which will call specialized check functions and
@@ -267,7 +268,7 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
         case TYPE_INTEGER:
             if(is_int(value->field_value.int_value)){
                 value->field_type=TYPE_INTEGER;
-                value->field_value.primary_key_value=stroll(value->field_value.text_value, NULL, 10);
+                value->field_value.primary_key_value=strtoll(value->field_value.text_value, NULL, 10);
                 return true;
             }
             break;
@@ -302,15 +303,13 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
 
 bool is_int(char *field) {
 
-    //to recode
-    if(*field == '-') {
-        field++;
-    }
-    while (*field != '\0') {
-        if (!isdigit(*field)) {
-            return false;
-        }
-        field++;
+    char *endptr;
+    long long int value;
+
+    value = strtoll(field, &endptr, 10);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
@@ -326,19 +325,13 @@ bool is_int(char *field) {
  */
 bool is_float(char *field) {
 
-    //to recode
-    bool is_dot = false;
-    while (*field != '\0') {
-        if (!isdigit(*field) && *field != '.' ) {
-            return false;
-        }
-        if (*field == '.') {
-            if (is_dot) {
-                return false;
-            }
-            is_dot = true;
-        }
-    field++;
+    char *endptr;
+    double value;
+
+    value = strtod(field, &endptr);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
@@ -351,12 +344,13 @@ bool is_float(char *field) {
  */
 bool is_key(char *value) {
 
-    //to recode
-    while (*value != '\0') {
-        if (!isdigit(*value)) {
-            return false;
-        }
-        value++;
+    char *endptr;
+    unsigned long long int key;
+
+    key = strtoull(value, &endptr, 10);
+    if(*endptr != '\0' || errno) {
+        errno = 0;
+        return false;
     }
     return true;
 }
