@@ -234,7 +234,7 @@ bool check_value_types(table_record_t *fields_list, table_definition_t *table_de
 field_definition_t *find_field_definition(char *field_name, table_definition_t *table_definition) {
     for(int i=0; i < table_definition->fields_count; i++){
         if(table_definition->definitions[i].column_name == field_name){
-            return table_definition;
+            return &table_definition->definitions[i];
         }
     }
     return NULL;     
@@ -255,20 +255,26 @@ field_definition_t *find_field_definition(char *field_name, table_definition_t *
  */
 bool is_value_valid(field_record_t *value, field_definition_t *field_definition) {
     if(value->column_name == field_definition->column_name){
-        switch (value->field_type)
+        switch (field_definition->column_type)
         {
         case TYPE_PRIMARY_KEY:
-            if(is_key(value->field_value.primary_key_value)){
+            if(is_key(value->field_value.text_value)){
+                value->field_type=TYPE_PRIMARY_KEY;
+                value->field_value.primary_key_value=strtoull(value->field_value.text_value, NULL, 10);
                 return true;
             }
             break;
         case TYPE_INTEGER:
             if(is_int(value->field_value.int_value)){
+                value->field_type=TYPE_INTEGER;
+                value->field_value.primary_key_value=stroll(value->field_value.text_value, NULL, 10);
                 return true;
             }
             break;
         case TYPE_FLOAT:
             if(is_float(&value->field_value.float_value)){
+                value->field_type=TYPE_FLOAT;
+                value->field_value.float_value=strtod(value->field_value.text_value, NULL);
                 return true;
             }
             break;
