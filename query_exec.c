@@ -41,6 +41,10 @@ void execute(query_result_t *query) {
     }
 }
 
+/*!
+ * @brief function execute_create creates a table
+ * @param query query to be executed
+ */
 void execute_create(create_query_t *query) {
     create_table(query);
 }
@@ -67,6 +71,10 @@ void execute_select(update_or_select_query_t *query) {
     chdir("..");
 }
 
+/*!
+ * @brief function execute_update updates records in the database
+ * @param query query to be executed
+ */
 void execute_update(update_or_select_query_t *query) {
     chdir(query->table_name);
     record_list_t *record = malloc(sizeof(record_list_t));
@@ -87,10 +95,14 @@ void execute_update(update_or_select_query_t *query) {
     chdir("..");
 }
 
+/*!
+ * @brief function execute_delete deletes records in a database
+ * @param query query to be executed
+ */
 void execute_delete(delete_query_t *query) {
 
     chdir(query->table_name);
-    
+
     record_list_t *record = malloc(sizeof(record_list_t));
     table_definition_t *required_fields = malloc(sizeof(table_definition_t));
     char table_name[TEXT_LENGTH];
