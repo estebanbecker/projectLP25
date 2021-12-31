@@ -58,19 +58,19 @@ int field_record_length(field_record_t *field_record) {
         break;
     
     case TYPE_FLOAT:
-        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        char buffer[TEXT_LENGTH] = NULL;
         sprintf(buffer, "%f", field_record->field_value.float_value);
         return strlen(buffer);
         break;
 
     case TYPE_PRIMARY_KEY:
-        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        char buffer[TEXT_LENGTH] = NULL;
         sprintf(buffer, "%d", field_record->field_value.primary_key_value);
         return strlen(buffer);
         break;
     
     case TYPE_INTEGER:
-        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        char buffer[TEXT_LENGTH] = NULL;
         sprintf(buffer, "%d", field_record->field_value.primary_key_value);
         return strlen(buffer);
         break;
