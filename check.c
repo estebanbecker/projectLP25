@@ -31,10 +31,10 @@ bool check_query(query_result_t *query) {
             return check_query_create(&query->query_content.create_query);
             break;
         case QUERY_DROP_DB:
-            return check_query_drop_db(&query->query_content.database_name);
+            return check_query_drop_db(&query->query_content.database_name[0]);
             break;
         case QUERY_DROP_TABLE:
-            return check_query_drop_table(&query->query_content.table_name);
+            return check_query_drop_table(&query->query_content.table_name[0]);
             break;
         case QUERY_INSERT:
             return check_query_insert(&query->query_content.insert_query);
@@ -60,13 +60,13 @@ bool check_query_select(update_or_select_query_t *query) {
     table_definition_t *result;
     if (get_table_definition(query->table_name, result)!=NULL) //check existence of table of FROM query
     {
-        if(check_fields_list(&query->set_clause, result) == true)
+        if(check_fields_list(&query->set_clause, result) == true || (query->set_clause.fields_count == 1 && query->set_clause.fields[0].field_type == TYPE_TEXT && strcmp(query->set_clause.fields[0].field_value.text_value,"*") == 0))
         {
             if(check_fields_list(&query->where_clause.values, result) == true)
             {
                 if (check_value_types(&query->set_clause, result) == true)
                 {
-                    if(check_value_types(&query->where_clause, result) == true){
+                    if(check_value_types(&query->where_clause.values, result) == true){
                         return query;
                     }
 
@@ -126,15 +126,24 @@ bool check_query_create(create_query_t *query) {
  */
 bool check_query_insert(insert_query_t *query) {
     table_definition_t *result;
-    for(int field = 0; field < query->fields_names.fields_count; field++){
-        strcpy(query->fields_values.fields[field].column_name, query->fields_names.fields[field].field_value.text_value);
-        printf("Field %d %s\n", field, query->fields_names.fields[field].field_value.text_value);
+
+    if(query->fields_names.fields_count == 1 && query->fields_names.fields[0].field_type == TYPE_TEXT && strcmp(query->fields_names.fields[0].field_value.text_value,"*") == 0){
+        if(get_table_definition(query->table_name, result)==NULL){
+            for (int i = 0; i < result->fields_count; i++) {
+                strcpy(query->fields_values.fields[i].column_name , result->definitions[i].column_name);
+            }
+        }
+    }else{
+        for(int field = 0; field < query->fields_names.fields_count; field++){
+            strcpy(query->fields_values.fields[field].column_name, query->fields_names.fields[field].field_value.text_value);
+            printf("Field %d %s\n", field, query->fields_names.fields[field].field_value.text_value);
+        }
     }
     if(get_table_definition(query->table_name, result)!=NULL){
-            if(check_fields_list(&query->fields_names.fields, result) == false){
+            if(check_fields_list(&query->fields_names, result) == false){
                 return false;
             }
-            if(check_value_types(&query->fields_names.fields, result) == false){
+            if(check_value_types(&query->fields_names, result) == false){
                 return false;
             }
         return true;
@@ -200,7 +209,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
     int i=0;
     for (size_t i = 0; i < fields_list->fields_count; i++)
     {
-       if(find_field_definition(&fields_list->fields[i].field_value, table_definition)!=NULL){
+       if(find_field_definition(&fields_list->fields[i].column_name, table_definition)!=NULL){
            return false;
        }
     }
@@ -267,14 +276,14 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
             }
             break;
         case TYPE_INTEGER:
-            if(is_int(value->field_value.int_value)){
+            if(is_int(value->field_value.text_value)){
                 value->field_type=TYPE_INTEGER;
                 value->field_value.primary_key_value=strtoll(value->field_value.text_value, NULL, 10);
                 return true;
             }
             break;
         case TYPE_FLOAT:
-            if(is_float(&value->field_value.float_value)){
+            if(is_float(value->field_value.text_value)){
                 value->field_type=TYPE_FLOAT;
                 value->field_value.float_value=strtod(value->field_value.text_value, NULL);
                 return true;
@@ -305,9 +314,8 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
 bool is_int(char *field) {
 
     char *endptr;
-    long long int value;
-
-    value = strtoll(field, &endptr, 10);
+    
+    strtoll(field, &endptr, 10);
     if(*endptr != '\0' || errno) {
         errno = 0;
         return false;
@@ -327,9 +335,8 @@ bool is_int(char *field) {
 bool is_float(char *field) {
 
     char *endptr;
-    double value;
-
-    value = strtod(field, &endptr);
+    
+    strtod(field, &endptr);
     if(*endptr != '\0' || errno) {
         errno = 0;
         return false;
@@ -346,9 +353,8 @@ bool is_float(char *field) {
 bool is_key(char *value) {
 
     char *endptr;
-    unsigned long long int key;
 
-    key = strtoull(value, &endptr, 10);
+    strtoull(value, &endptr, 10);
     if(*endptr != '\0' || errno) {
         errno = 0;
         return false;

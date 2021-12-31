@@ -16,17 +16,7 @@ int main(int argc, char *argv[]) {
     // Here: check parameters with getopt
     // -d database_name
     // -l directory of the parent database folder (default: current directory)
-    //create table
-    create_query_t table;
-    strcpy(table.table_name, "test");
-    table.table_definition.fields_count=2;
-    strcpy(table.table_definition.definitions[0].column_name, "field");
-    strcpy(table.table_definition.definitions[1].column_name, "field2");
-    table.table_definition.definitions[0].column_type = TYPE_INTEGER;
-    table.table_definition.definitions[1].column_type = TYPE_PRIMARY_KEY;
-    create_query_t *ptable = &table;
-
-    
+ 
     char buffer[SQL_COMMAND_MAX_SIZE];
     query_result_t query;
     
