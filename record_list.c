@@ -47,35 +47,38 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * @author @estebanbecker
  */
 int field_record_length(field_record_t *field_record) {
-    char buffer[TEXT_LENGTH];
-    if (field_record == NULL)
-        return 0;
 
-    switch (field_record->field_type) {
-        case TYPE_INTEGER:
-            if (field_record->field_value.int_value < 0)
-                return (int) (log10(abs(field_record->field_value.int_value)) + 2);
-            else
-                return (int) (log10(field_record->field_value.int_value) + 1);
-                break;
-        case TYPE_PRIMARY_KEY:
-            return (int) (log10(field_record->field_value.int_value) + 1);
-            break;
-        case TYPE_FLOAT:
-            /* print the value into a text buffer 
-            count the characters int he buffer without the trailing '\0' and the 0 at the end of the buffer */
-            sprintf(buffer, "%.f", field_record->field_value.float_value);
-            return (int) strlen(buffer) - 1;
-            
-        case TYPE_TEXT:
-            return strlen(field_record->field_value.text_value);
-            break;
-        case TYPE_UNKNOWN:
-            return strlen(field_record->field_value.text_value);
-            break;
-        default:
-            return 0;
-            break;
+    if (!field_record)
+        return 0;
+    switch (field_record->field_type)
+    {
+
+    case TYPE_TEXT:
+        return strlen(field_record->field_value.text_value);
+        break;
+    
+    case TYPE_FLOAT:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%f", field_record->field_value.float_value);
+        return strlen(buffer);
+        break;
+
+    case TYPE_PRIMARY_KEY:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%d", field_record->field_value.primary_key_value);
+        return strlen(buffer);
+        break;
+    
+    case TYPE_INTEGER:
+        char buffer[MAX_TABLE_RECORD_SIZE] = NULL;
+        sprintf(buffer, "%d", field_record->field_value.primary_key_value);
+        return strlen(buffer);
+        break;
+
+    default:
+        return 0;
+        break;
+
     }
 }
 
@@ -103,6 +106,7 @@ int field_record_length(field_record_t *field_record) {
   +----+-------+
  */
 void display_table_record_list(record_list_t *record_list) {
+
     int max_field_lengths[MAX_FIELDS_COUNT]={0};
     record_list_node_t *record = record_list->head;
 
@@ -179,5 +183,6 @@ void display_table_record_list(record_list_t *record_list) {
         printf("+");
     }
     printf("\n");
+
 }
 

@@ -7,7 +7,9 @@
 #include "sql.h"
 #include "table.h"
 #include "check.h"
+#include "record_list.h"
 #include "expand.h"
+
 
 #define SQL_COMMAND_MAX_SIZE 1500
 
@@ -16,7 +18,7 @@ int main(int argc, char *argv[]) {
     // Here: check parameters with getopt
     // -d database_name
     // -l directory of the parent database folder (default: current directory)
- 
+
     char buffer[SQL_COMMAND_MAX_SIZE];
     query_result_t query;
     
@@ -43,5 +45,6 @@ int main(int argc, char *argv[]) {
 
     } while (true);
 
+    
     return 0;
 }
