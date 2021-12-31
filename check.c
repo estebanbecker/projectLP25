@@ -125,12 +125,12 @@ bool check_query_create(create_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_insert(insert_query_t *query) {
-    table_definition_t *result;
+    table_definition_t result;
 
     if(query->fields_names.fields_count == 1 && query->fields_names.fields[0].field_type == TYPE_TEXT && strcmp(query->fields_names.fields[0].field_value.text_value,"*") == 0){
-        if(get_table_definition(query->table_name, result)==NULL){
-            for (int i = 0; i < result->fields_count; i++) {
-                strcpy(query->fields_values.fields[i].column_name , result->definitions[i].column_name);
+        if(get_table_definition(query->table_name, &result)!=NULL){
+            for (int i = 0; i < result.fields_count; i++) {
+                strcpy(query->fields_values.fields[i].column_name , result.definitions[i].column_name);
             }
         }
     }else{
@@ -139,11 +139,11 @@ bool check_query_insert(insert_query_t *query) {
             printf("Field %d %s\n", field, query->fields_names.fields[field].field_value.text_value);
         }
     }
-    if(get_table_definition(query->table_name, result)!=NULL){
-            if(check_fields_list(&query->fields_names, result) == false){
+    if(get_table_definition(query->table_name, &result)!=NULL){
+            if(check_fields_list(&query->fields_values, &result) == false){
                 return false;
             }
-            if(check_value_types(&query->fields_names, result) == false){
+            if(check_value_types(&query->fields_values, &result) == false){
                 return false;
             }
         return true;
@@ -160,10 +160,10 @@ bool check_query_insert(insert_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_delete(delete_query_t *query) {
-    table_definition_t *result;
-    if(get_table_definition(query->table_name, result)!=NULL){
-        if(check_fields_list(&query->where_clause.values, result) == true){
-            if(check_value_types(&query->where_clause.values, result) == true){
+    table_definition_t result;
+    if(get_table_definition(query->table_name, &result)!=NULL){
+        if(check_fields_list(&query->where_clause.values, &result) == true){
+            if(check_value_types(&query->where_clause.values, &result) == true){
                 return true;
             }
         }
@@ -209,7 +209,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
     int i=0;
     for (size_t i = 0; i < fields_list->fields_count; i++)
     {
-       if(find_field_definition(&fields_list->fields[i].column_name[0], table_definition)!=NULL){
+       if(find_field_definition(&fields_list->fields[i].column_name[0], table_definition)==NULL){
            return false;
        }
     }
@@ -229,6 +229,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
     int i;
     for(int i=0; i < fields_list->fields_count; i++){
+
         if(is_value_valid(&fields_list->fields[i], find_field_definition(fields_list->fields[i].column_name, table_definition))){
             return true;
         }
@@ -244,7 +245,7 @@ bool check_value_types(table_record_t *fields_list, table_definition_t *table_de
  */
 field_definition_t *find_field_definition(char *field_name, table_definition_t *table_definition) {
     for(int i=0; i < table_definition->fields_count; i++){
-        if(table_definition->definitions[i].column_name == field_name){
+        if(strcmp(table_definition->definitions[i].column_name, field_name) == 0){
             return &table_definition->definitions[i];
         }
     }

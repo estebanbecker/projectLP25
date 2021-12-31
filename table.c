@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <string.h>
 
 /*!
  * @brief function open_definition_file opens the table key file, assuming calling programm is in the correct directory
@@ -81,7 +82,7 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_file_type(char *table_name, char *mode, char *type) {
-    if(mode == 'r' || mode == 'a' || mode == 'w'){
+    if(*mode == 'r' || *mode == 'a' || *mode == 'w'){
         if(directory_exists(table_name)){
             
         }

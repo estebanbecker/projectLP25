@@ -73,7 +73,9 @@ int main(int argc, char *argv[]) {
         if(parse(buffer, &query) == NULL) {
             continue;
         }
-        check_query(&query);
+        if(!check_query(&query)){
+            continue;
+        }
 
         expand(&query);
 
