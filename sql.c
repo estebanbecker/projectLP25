@@ -102,10 +102,13 @@ char *get_field_name(char *sql, char *field_name) {
     if (*sql== '\'') {
         i++;
         sql++;
-        while(*sql != '\'') {
+        while(*sql != '\'' && *sql != '\0') {
             field_name[i-1] = *sql;
             i++;
             sql++;
+        }
+        if(*sql == '\0') {
+            return NULL;
         }
         field_name[i-1] = '\0';
         return ++sql;

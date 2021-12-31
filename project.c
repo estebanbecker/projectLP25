@@ -1,7 +1,9 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <unistd.h>
 
+#include "query_exec.h"
 #include "utils.h"
 #include "database.h"
 #include "sql.h"
@@ -11,13 +13,48 @@
 #include "expand.h"
 
 
-#define SQL_COMMAND_MAX_SIZE 1500
 
+#define SQL_COMMAND_MAX_SIZE 1500
 int main(int argc, char *argv[]) {
 
     // Here: check parameters with getopt
     // -d database_name
     // -l directory of the parent database folder (default: current directory)
+    
+    int opt;
+    char *database_name = NULL;
+    char *database_path = NULL;
+
+    argc=3;
+    argv[1]="-d";
+    argv[2]="test";
+
+    while ((opt = getopt(argc, argv, "d:l:")) != -1) {
+        switch (opt) {
+            case 'd':
+                database_name = optarg;
+                break;
+            case 'l':
+                database_path = optarg;
+                break;
+            default:
+                printf("Usage: %s -d database_name -l database_path\n", argv[0]);
+                return 1;
+        }
+    }
+
+    if (database_name == NULL) {
+        printf("Usage: %s -d database_name -l database_path\n", argv[0]);
+        return 1;
+    }
+    if(database_path != NULL){
+
+        printf("Error: database path is not valid\n");
+        return 1;
+
+    }
+
+    create_db_directory(database_name);
 
     char buffer[SQL_COMMAND_MAX_SIZE];
     query_result_t query;
@@ -36,11 +73,11 @@ int main(int argc, char *argv[]) {
         if(parse(buffer, &query) == NULL) {
             continue;
         }
-        //here check if the query is valid
+        check_query(&query);
 
         expand(&query);
 
-        //here execute the query
+        execute(&query);
 
 
     } while (true);
