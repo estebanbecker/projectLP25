@@ -44,6 +44,7 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * for strings)
  * @param field_record the field value whose display length must be computed
  * @return the display length of the field
+ * @author @estebanbecker
  */
 int field_record_length(field_record_t *field_record) {
     char buffer[TEXT_LENGTH];
@@ -90,6 +91,7 @@ int field_record_length(field_record_t *field_record) {
  * Step 2 and 3 require that you add extra space padding to the left of the values for those to be aligned.
  * - Step 4: add a line as in step 2.
  * @param record_list the record list to display
+ * @author @estebanbecker
  *
  * For instance, a record list with two fields named 'id' and 'label' and two records (1, 'blah'), and (2, 'foo') will
  * display:

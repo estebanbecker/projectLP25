@@ -209,7 +209,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
     int i=0;
     for (size_t i = 0; i < fields_list->fields_count; i++)
     {
-       if(find_field_definition(&fields_list->fields[i].column_name, table_definition)!=NULL){
+       if(find_field_definition(&fields_list->fields[i].column_name[0], table_definition)!=NULL){
            return false;
        }
     }
@@ -309,6 +309,7 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  * You may use strtoll for this test.
  * @param value the text representation to test
  * @return true if value can be converted into an integer, false if it cannot
+ * @author @estebanbecker
  */
 
 bool is_int(char *field) {
@@ -349,6 +350,7 @@ bool is_float(char *field) {
  * You may use strtoull for this test.
  * @param value the text representation to test
  * @return true if value can be converted into a key, false if it cannot
+ * @author @estebanbecker
  */
 bool is_key(char *value) {
 
