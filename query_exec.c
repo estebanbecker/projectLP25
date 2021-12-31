@@ -28,9 +28,11 @@ void execute(query_result_t *query) {
         case QUERY_SELECT:
             execute_select(&query->query_content.select_query); 
             break;
+            /*
         case QUERY_UPDATE:
             execute_update(&query);
             break;
+            */
         case QUERY_DELETE:
             execute_delete(&query->query_content.delete_query);
             break;
@@ -75,44 +77,15 @@ void execute_select(update_or_select_query_t *query) {
  * @brief function execute_update updates records in the database
  * @param query query to be executed
  */
+/*
 void execute_update(update_or_select_query_t *query) {
     chdir(query->table_name);
-    record_list_t *record = malloc(sizeof(record_list_t));
-    get_filtered_records(
-            query->table_name, 
-            &query->set_clause, 
-            &query->where_clause, 
-            record);
-    if (record != NULL) {
-        record_list_node_t *tmp = record->head;
-        while (tmp) {
-            tmp = tmp->next;
-            
-        }
-        record->head = record->tail = NULL;
-    }
-    free(record);
-    chdir("..");
-}
-
-/*!
- * @brief function execute_delete deletes records in a database
- * @param query query to be executed
- */
-void execute_delete(delete_query_t *query) {
-
-    chdir(query->table_name);
-
-    record_list_t *record = malloc(sizeof(record_list_t));
-    table_definition_t *required_fields = malloc(sizeof(table_definition_t));
+    table_definition_t *table_definition = malloc(sizeof(table_definition_t));
     char table_name[TEXT_LENGTH];
     strcpy(table_name, query->table_name);
-    required_fields = get_table_definition(query->table_name, required_fields);
+    get_table_definition(query->table_name, table_definition);
     filter_t *filter = malloc(sizeof(filter_t));
 
-    //using get_filtered_records code
-
-    *filter = query->where_clause;
     FILE *idx = open_index_file(table_name, "rb");
 
     if (idx){
@@ -120,6 +93,7 @@ void execute_delete(delete_query_t *query) {
         table_definition_t table_definitions;
         table_record_t record;
         table_record_t result_record;
+        uint8_t empty = 0;
 
         get_table_definition(table_name, &table_definitions);
 
@@ -129,8 +103,37 @@ void execute_delete(delete_query_t *query) {
                 fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
                 get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
 
-                if (is_matching_filter(&record, &query->where_clause)) {
-                    index_record.is_active = false;
+                if (is_matching_filter(&record, filter)) {
+                    for (int i = 0; i < record.fields_count; i++)
+                    {
+                        if(find_field_in_table_record()){
+                            record.fields[i]
+                        }
+                    }
+                    
+                    
+                    //write said record
+                    if (write_record(table_name, index_record.record_offset, &table_definition, &record)){
+                        FILE *idx = open_index_file(table_name, "rb+");
+                        if (idx) {
+                            uint16_t last_size;
+
+                            fseek(idx, -3, SEEK_END);
+                            fread(&last_size, sizeof(uint16_t), 1, idx);
+
+                            //complete if new record was created
+                            if (last_size == 0) {
+                                fseek(idx, -6, SEEK_CUR);
+                                fwrite(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+                                fwrite(&index_record.record_length, sizeof(uint16_t), 1, idx);
+                            }
+                            fclose(idx);
+                        }else{
+                            printf("ERROR: could not open index file\n");
+                        }
+                    }else {
+                        printf("ERROR: could not write in data\n");
+                    }
                 }
                 fseek(idx, 3, SEEK_CUR);
             } else {
@@ -140,7 +143,55 @@ void execute_delete(delete_query_t *query) {
 
         fclose(idx);
     }
-    free(record);
+    free(filter);
+    free(table_definition);
+    chdir("..");
+}
+*/
+
+/*!
+ * @brief function execute_delete deletes records in a database
+ * @param query query to be executed
+ */
+void execute_delete(delete_query_t *query) {
+
+    chdir(query->table_name);
+    table_definition_t *table_definition = malloc(sizeof(table_definition_t));
+    char table_name[TEXT_LENGTH];
+    strcpy(table_name, query->table_name);
+    get_table_definition(query->table_name, table_definition);
+    filter_t *filter = malloc(sizeof(filter_t));
+
+    FILE *idx = open_index_file(table_name, "rb");
+
+    if (idx){
+        index_record_t index_record;
+        table_definition_t table_definitions;
+        table_record_t record;
+        table_record_t result_record;
+        uint8_t empty = 0;
+
+        get_table_definition(table_name, &table_definitions);
+
+        //read index to look through all active records
+        while (fread(&index_record.is_active, sizeof(uint8_t), 1, idx) == 1) {
+            if (index_record.is_active) {
+                fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+                get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
+
+                if (is_matching_filter(&record, filter)) {
+                    fwrite(&empty, sizeof(uint8_t), 1, idx);
+                }
+                fseek(idx, 3, SEEK_CUR);
+            } else {
+                fseek(idx, 7, SEEK_CUR);
+            }
+        }
+
+        fclose(idx);
+    }
+    free(filter);
+    free(table_definition);
     chdir("..");
 }
 
