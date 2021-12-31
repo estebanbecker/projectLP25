@@ -6,6 +6,7 @@
 #define _EXPAND_H
 
 #include "sql.h"
+#include "table.h"
 
 void expand(query_result_t *query);
 

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 void clear_list(record_list_t *record_list) {
     if (record_list != NULL) {
@@ -23,7 +24,7 @@ void add_record(record_list_t *record_list, table_record_t *record) {
     if (!record_list)
         return;
 
-    record_list_node_t *new_node = malloc(sizeof(record_list_node_t));
+    record_list_node_t *new_node = (record_list_node_t*) malloc(sizeof(record_list_node_t));
     memcpy(&new_node->record, record, sizeof (table_record_t));
     new_node->next = NULL;
 
@@ -43,8 +44,10 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * for strings)
  * @param field_record the field value whose display length must be computed
  * @return the display length of the field
+ * @author @estebanbecker
  */
 int field_record_length(field_record_t *field_record) {
+
     if (!field_record)
         return 0;
     switch (field_record->field_type)
@@ -75,6 +78,7 @@ int field_record_length(field_record_t *field_record) {
     default:
         return 0;
         break;
+
     }
 }
 
@@ -90,6 +94,7 @@ int field_record_length(field_record_t *field_record) {
  * Step 2 and 3 require that you add extra space padding to the left of the values for those to be aligned.
  * - Step 4: add a line as in step 2.
  * @param record_list the record list to display
+ * @author @estebanbecker
  *
  * For instance, a record list with two fields named 'id' and 'label' and two records (1, 'blah'), and (2, 'foo') will
  * display:
@@ -102,14 +107,82 @@ int field_record_length(field_record_t *field_record) {
  */
 void display_table_record_list(record_list_t *record_list) {
 
-    int table_size;
-    if (record_list != NULL) {
-        record_list_node_t *tmp = record_list->head;
-        while (tmp) {
-            record_list->head = tmp->next;
-            free(tmp);
-            tmp = record_list->head;
+    int max_field_lengths[MAX_FIELDS_COUNT]={0};
+    record_list_node_t *record = record_list->head;
+
+    while (record != NULL)
+    {
+        for(int i=0; i<record->record.fields_count; i++)
+        {
+            int field_length = field_record_length(&record->record.fields[i]);
+            if(field_length > max_field_lengths[i])
+                max_field_lengths[i] = field_length;
         }
-        record_list->head = record_list->tail = NULL;
-    } 
+    }
+
+    printf("+");
+    for(int i=0; i<record->record.fields_count; i++)
+    {
+        for(int j=0; j<max_field_lengths[i]+2; j++)
+            printf("-");
+        printf("+");
+    }
+    printf("\n");
+
+    printf("|");
+    for(int i=0; i<record->record.fields_count; i++)
+    {
+        printf(" %-*s |", max_field_lengths[i], record->record.fields[i].column_name);
+    }
+    printf("\n");
+
+    printf("+");
+    for(int i=0; i<record->record.fields_count; i++)
+    {
+        for(int j=0; j<max_field_lengths[i]+2; j++)
+            printf("-");
+        printf("+");
+    }
+    printf("\n");
+
+    record = record_list->head;
+    while (record != NULL)
+    {
+        printf("|");
+        for(int i=0; i<record->record.fields_count; i++)
+        {
+            switch (record->record.fields[i].field_type)
+            {
+                case TYPE_INTEGER:
+                    printf(" %*lld |", max_field_lengths[i], record->record.fields[i].field_value.int_value);
+                    break;
+                case TYPE_FLOAT:
+                    printf(" %*f |", max_field_lengths[i], record->record.fields[i].field_value.float_value);
+                    break;
+                case TYPE_TEXT:
+                    printf(" %*s |", max_field_lengths[i], record->record.fields[i].field_value.text_value);
+                    break;
+                case TYPE_PRIMARY_KEY:
+                    printf(" %*lld |", max_field_lengths[i], record->record.fields[i].field_value.int_value);
+                    break;
+                case TYPE_UNKNOWN:
+                    printf(" %*s |", max_field_lengths[i], record->record.fields[i].field_value.text_value);
+                    break;
+            }
+           
+        }
+        printf("\n");
+        record = record->next;
+    }
+
+    printf("+");
+    for(int i=0; i<record->record.fields_count; i++)
+    {
+        for(int j=0; j<max_field_lengths[i]+2; j++)
+            printf("-");
+        printf("+");
+    }
+    printf("\n");
+
 }
+
