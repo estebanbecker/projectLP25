@@ -57,7 +57,21 @@ FILE *open_content_file(char *table_name, char *mode) {
     }
     return NULL;
 }
-
+/*!
+ * @brief function open_file_type opens a file of a certain type
+ * @param table_name the name of the table whose key file must be opened
+ * @param mode the opening mode (as in fopen)
+ * @param type the type of file opened (key, content, definition or index)
+ * @return and pointer to a FILE type, resulting from the fopen function
+ */
+FILE *open_file_type(char *table_name, char *mode, char *type) {
+    if(*mode == 'r' || *mode == 'a' || *mode == 'w'){
+        if(directory_exists(table_name)){
+            
+        }
+    } 
+    return NULL;
+}
 /*!
  * @brief function open_key_file opens the table key file
  * @param table_name the name of the table whose key file must be opened
@@ -74,21 +88,6 @@ FILE *open_key_file(char *table_name, char *mode) {
     return NULL;
 }
 
-/*!
- * @brief function open_file_type opens a file of a certain type
- * @param table_name the name of the table whose key file must be opened
- * @param mode the opening mode (as in fopen)
- * @param type the type of file opened (key, content, definition or index)
- * @return and pointer to a FILE type, resulting from the fopen function
- */
-FILE *open_file_type(char *table_name, char *mode, char *type) {
-    if(*mode == 'r' || *mode == 'a' || *mode == 'w'){
-        if(directory_exists(table_name)){
-            
-        }
-    } 
-    return NULL;
-}
 
 /*!
  * @brief function create_table creates the files for a new table. It checks if the table doesn't already exist,
