@@ -83,9 +83,14 @@ int main(int argc, char *argv[]) {
 
         execute(&query);
 
+        if(query.query_type == QUERY_DROP_DB){
+            printf("Database %s dropped\n", database_name);
+            printf("Bye!\n");
+            return 0;
+        }
 
     } while (true);
 
-    
+    printf("Bye!\n");
     return 0;
 }

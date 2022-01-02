@@ -192,6 +192,7 @@ bool check_query_drop_table(char *table_name) {
  * @return true if valid, false if invalid
  */
 bool check_query_drop_db(char *db_name) {
+    chdir("..");
     DIR *const db = opendir(db_name);
     if (db) {
         return true;
