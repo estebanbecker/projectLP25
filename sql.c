@@ -120,6 +120,9 @@ char *get_field_name(char *sql, char *field_name) {
             sql++;
         }
         field_name[i] = '\0';
+        if(field_name[0] == '\0') {
+            return NULL;
+        }
         return sql;
     }
 }

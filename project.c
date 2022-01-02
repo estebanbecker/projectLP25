@@ -25,9 +25,6 @@ int main(int argc, char *argv[]) {
     char *database_name = NULL;
     char *database_path = NULL;
 
-    argc=3;
-    argv[1]="-d";
-    argv[2]="test";
     while ((opt = getopt(argc, argv, "d:l:")) != -1) {
         switch (opt) {
             case 'd':
