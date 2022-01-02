@@ -39,6 +39,9 @@ bool check_query(query_result_t *query) {
         case QUERY_INSERT:
             return check_query_insert(&query->query_content.insert_query);
             break;
+        case QUERY_DELETE:
+            return check_query_delete(&query->query_content.delete_query);
+            break;
         default:
             printf("Unsupported query code\n");
     }
@@ -88,10 +91,10 @@ bool check_query_select(update_or_select_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_update(update_or_select_query_t *query) {
-    table_definition_t *result;
-    if(get_table_definition(query->table_name, result)!=NULL){ //check existence of table from request        
-        if(check_value_types(&query->set_clause, result) == true){
-            if(check_value_types(&query->where_clause.values, result) == true){
+    table_definition_t result;
+    if(get_table_definition(&query->table_name, &result)!=NULL){ //check existence of table from request        
+        if(check_value_types(&query->set_clause, &result) == true){
+            if(check_value_types(&query->where_clause.values, &result) == true){
                 return true;
             }
         }
