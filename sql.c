@@ -134,9 +134,6 @@ char *get_field_name(char *sql, char *field_name) {
  */
 bool has_reached_sql_end(char *sql) {
 
-    if(sql==NULL) {
-        return true;
-    }
 
     sql=get_sep_space(sql);
 
@@ -179,6 +176,10 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
         }else{
             sql= get_field_name(sql, field);
 
+            if(sql == NULL){
+                return NULL;
+            }
+
             //check the type of the field and add it to the list
 
             result->fields[result->fields_count].field_type = TYPE_UNKNOWN;
@@ -197,6 +198,10 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
         
     }
     
+    if(sql == NULL){
+        return NULL;
+    }
+
     //if there is a parenthesis, the list of values or fields names must end with a parenthesis
 
     if(get_sep_space_and_char(sql, ')') != NULL && parenthesis_opened) {
@@ -246,6 +251,10 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
 
         //Get de field name
         sql = get_field_name(sql, result->definitions[result->fields_count].column_name);
+
+        if(sql == NULL){
+            return NULL;
+        }
 
         if(has_reached_sql_end(sql)) {
             printf("Error in field list\n");
@@ -545,6 +554,9 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
         sql++;
     }else{
         sql = parse_fields_or_values_list(sql, &result->query_content.select_query.set_clause);
+        if(sql == NULL){
+            return NULL;
+        }
     }
     if (has_reached_sql_end(sql)) {
         return NULL;
@@ -606,10 +618,17 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
     }
     sql = get_field_name(sql, result->query_content.create_query.table_name);
 
+    if(sql == NULL){
+        return NULL;
+    }
+
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
     sql = parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+    if(sql == NULL){
+        return NULL;
+    }
     if (has_reached_sql_end(sql)) {
         return result;
     }else{
@@ -645,6 +664,9 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
         return NULL;
     }
     sql= get_field_name(sql, result->query_content.insert_query.table_name);
+    if(sql == NULL){
+        return NULL;
+    }
     if (has_reached_sql_end(sql)) {
         return NULL;
     }
@@ -652,6 +674,10 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
     if(get_keyword(sql, "values") == NULL){
 
         sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
+
+        if(sql == NULL){
+            return NULL;
+        }  
 
         if (has_reached_sql_end(sql)) {
             return NULL;
@@ -673,6 +699,9 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
         return NULL;
     }
     sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_values);
+    if(sql == NULL){
+        return NULL;
+    }
     if (has_reached_sql_end(sql)) {
         return result;
     }else{
@@ -699,14 +728,29 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
             return NULL;
     }
     sql=get_field_name(sql, result->query_content.update_query.table_name);
+
+    if(sql == NULL){
+        return NULL;
+    }
+
     if(has_reached_sql_end(sql)){
         return NULL;
     }
     sql=get_keyword(sql, "set");
+
+    if(sql == NULL){
+        return NULL;
+    }
+
     if(has_reached_sql_end(sql)){
         return NULL;
     }
     sql=parse_set_clause(sql, &result->query_content.update_query.set_clause);
+
+    if(sql == NULL){
+        return NULL;
+    }
+
     if(has_reached_sql_end(sql)){
         return result;
     }
@@ -715,9 +759,25 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
         if(has_reached_sql_end(sql)){
             return NULL;
         }
+
+        if(has_reached_sql_end(sql)){
+            return NULL;
+        }
         sql = get_keyword(sql, "where");
+
+        if(sql == NULL){
+            return NULL;
+        }
+
+        if (has_reached_sql_end(sql)) {
+            return NULL;
+        }
         sql = get_sep_space(sql);
         sql = parse_where_clause(sql, &result->query_content.update_query.where_clause);
+
+        if(sql == NULL){
+            return NULL;
+        }
 
     }else{
         return NULL;
@@ -744,21 +804,48 @@ query_result_t *parse_delete(char *sql, query_result_t *result) {
             return NULL;
     }
     sql=get_keyword(sql, "from");
+
+    if(sql == NULL){
+        return NULL;
+    }
+
     if(has_reached_sql_end(sql)){
         return NULL;
     }
     sql=get_field_name(sql, result->query_content.delete_query.table_name);
+
+    if(sql == NULL){
+        return NULL;
+    }
+
     if(has_reached_sql_end(sql)){
         return result;
     }
     else if(get_keyword(sql, "where") != NULL){
+
+        if(sql == NULL){
+            return NULL;
+        }
         
         if(has_reached_sql_end(sql)){
             return NULL;
         }
         sql = get_keyword(sql, "where");
+
+        if(sql == NULL){
+            return NULL;
+        }
+
+        if (has_reached_sql_end(sql)) {
+            return NULL;
+        }
+
         sql = get_sep_space(sql);
         sql = parse_where_clause(sql, &result->query_content.delete_query.where_clause);
+
+        if(sql == NULL){
+            return NULL;
+        }
 
     }else{
         return NULL;
@@ -781,6 +868,11 @@ query_result_t *parse_drop_db(char *sql, query_result_t *result) {
         return NULL;
     }
     sql = get_field_name(sql, result->query_content.database_name);
+
+    if (sql == NULL) {
+        return NULL;
+    }
+
     if (has_reached_sql_end(sql)) {
         return result;
     }else{
@@ -803,6 +895,11 @@ query_result_t *parse_drop_table(char *sql, query_result_t *result) {
     }
 
     sql = get_field_name(sql, result->query_content.table_name);
+
+    if(sql == NULL){
+        return NULL;
+    }
+    
     if (has_reached_sql_end(sql)) {
         return result;
     }else{
