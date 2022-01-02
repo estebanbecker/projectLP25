@@ -228,13 +228,14 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
  */
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
     int i;
+    bool result = true;
     for(int i=0; i < fields_list->fields_count; i++){
 
-        if(is_value_valid(&fields_list->fields[i], find_field_definition(fields_list->fields[i].column_name, table_definition))){
-            return true;
+        if(!is_value_valid(&fields_list->fields[i], find_field_definition(fields_list->fields[i].column_name, table_definition))){
+            result = false;
         }
     }
-    return false;
+    return result;
 }
 
 /*!
@@ -266,7 +267,7 @@ field_definition_t *find_field_definition(char *field_name, table_definition_t *
  * @return true if valid (and converted), false if invalid
  */
 bool is_value_valid(field_record_t *value, field_definition_t *field_definition) {
-    if(value->column_name == field_definition->column_name){
+    if(strcmp(value->column_name,field_definition->column_name) == 0){
         switch (field_definition->column_type)
         {
         case TYPE_PRIMARY_KEY:
@@ -291,11 +292,11 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
             }
             break;
         case TYPE_TEXT:
-            //
+            value->field_type=TYPE_TEXT;
             return true;
             break;
         case TYPE_UNKNOWN:
-            //
+            value->field_type=TYPE_TEXT;
             return true;
             break;
         default:
