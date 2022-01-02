@@ -192,11 +192,15 @@ bool check_query_drop_table(char *table_name) {
  * @return true if valid, false if invalid
  */
 bool check_query_drop_db(char *db_name) {
-    chdir("..");
-    DIR *const db = opendir(db_name);
+    char *path = malloc(strlen(db_name) + 4);
+    strcpy(path, "../");
+    strcat(path, db_name);
+    DIR *const db = opendir(path);
     if (db) {
+        free (path);
         return true;
         }
+    free (path);
     return false;
 }
 
@@ -209,7 +213,6 @@ bool check_query_drop_db(char *db_name) {
  * @return true if all fields belong to table, false else
  */
 bool check_fields_list(table_record_t *fields_list, table_definition_t *table_definition) {
-    int i=0;
     for (size_t i = 0; i < fields_list->fields_count; i++)
     {
         if(*fields_list->fields[i].column_name == '\0'){
@@ -233,7 +236,6 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
  * @return true if all fields belong to table and their value types are correct, false else
  */
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
-    int i;
     for(int i=0; i < fields_list->fields_count; i++){
         if(find_field_definition(&fields_list->fields[i].column_name[0], table_definition)!=NULL){
             if(!is_value_valid(&fields_list->fields[i], find_field_definition(fields_list->fields[i].column_name, table_definition))){
@@ -312,7 +314,8 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
             return false;
             break;
         }
-    }    
+    }  
+    return false; 
 }
 
 /*!
