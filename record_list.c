@@ -107,6 +107,11 @@ void display_table_record_list(record_list_t *record_list) {
     int max_field_lengths[MAX_FIELDS_COUNT]={0};
     record_list_node_t *record = record_list->head;
 
+    if(record_list->head == NULL){
+        printf("No records found\n");
+        return;
+    }
+    
     while (record != NULL)
     {
         for(int i=0; i<record->record.fields_count; i++)

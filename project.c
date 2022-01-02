@@ -52,6 +52,7 @@ int main(int argc, char *argv[]) {
     }
 
     create_db_directory(database_name);
+    chdir(database_name);
 
     char buffer[SQL_COMMAND_MAX_SIZE];
     query_result_t query;
@@ -71,6 +72,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
         if(!check_query(&query)){
+            printf("Error: query is not valid\n");
             continue;
         }
 
@@ -78,9 +80,14 @@ int main(int argc, char *argv[]) {
 
         execute(&query);
 
+        if(query.query_type == QUERY_DROP_DB){
+            printf("Database %s dropped\n", database_name);
+            printf("Bye!\n");
+            return 0;
+        }
 
     } while (true);
 
-    
+    printf("Bye!\n");
     return 0;
 }

@@ -483,10 +483,14 @@ query_result_t *parse(char *sql, query_result_t *result) {
             if(parse_drop_table(get_keyword(sql, "table"), result)==NULL){
                 error = true;
             }
-        }else if (get_keyword(sql, "database") != NULL || get_keyword(sql, "database") != NULL) {
+        }else if (get_keyword(sql, "database") != NULL) {
             if(parse_drop_db(get_keyword(sql, "database"), result)==NULL){
                 error = true;
             }
+        }else if (get_keyword(sql, "db") != NULL) {
+            if(parse_drop_db(get_keyword(sql, "db"), result)==NULL){
+                error = true;
+        }
         }else{
             printf("Error: drop command not recognized\n");
             return NULL;
