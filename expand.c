@@ -62,9 +62,9 @@ void expand_insert(insert_query_t *query) {
     }else{
         for (int i = 0; i < table.fields_count; i++) {
             if(!is_field_in_record(&query->fields_values, table.definitions[i].column_name)) {
-                strcpy(query->fields_values.fields[query->fields_names.fields_count].column_name , table.definitions[i].column_name);
-                query->fields_values.fields[query->fields_names.fields_count].field_type = table.definitions[i].column_type;
-                make_default_value(&query->fields_values.fields[query->fields_names.fields_count],query->table_name);
+                strcpy(query->fields_values.fields[query->fields_values.fields_count].column_name , table.definitions[i].column_name);
+                query->fields_values.fields[query->fields_values.fields_count].field_type = table.definitions[i].column_type;
+                make_default_value(&query->fields_values.fields[query->fields_values.fields_count],query->table_name);
                 query->fields_values.fields_count++;
             }
         }
