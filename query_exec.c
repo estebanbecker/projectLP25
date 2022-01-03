@@ -52,6 +52,18 @@ void execute_create(create_query_t *query) {
 }
 
 void execute_insert(insert_query_t *query) {
+     for (int i = 0; i < query->fields_values.fields_count; i++)
+    {   
+        if(query->fields_values.fields[i].field_type == TYPE_PRIMARY_KEY){
+            unsigned long long next_key = get_next_key(query->table_name);
+            if( query->fields_values.fields[i].field_value.primary_key_value > next_key){
+                update_key(query->table_name, query->fields_values.fields[i].field_value.primary_key_value);
+            } else {
+                query->fields_values.fields[i].field_value.primary_key_value = next_key;
+                update_key(query->table_name, next_key++);
+            }
+        }  
+    }
     add_row_to_table(query->table_name, &query->fields_values);
 }
 
