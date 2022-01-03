@@ -104,7 +104,10 @@ int field_record_length(field_record_t *field_record) {
  */
 void display_table_record_list(record_list_t *record_list) {
 
+    printf("\n");
+
     int max_field_lengths[MAX_FIELDS_COUNT]={0};
+    int field_length ;
     record_list_node_t *record = record_list->head;
     record_list_node_t *buffer = record;
     if(record_list->head == NULL){
@@ -114,9 +117,9 @@ void display_table_record_list(record_list_t *record_list) {
     
     while (buffer != NULL)
     {
-        for(int i=0; i<record->record.fields_count; i++)
+        for(int i=0; i<buffer->record.fields_count; i++)
         {
-            int field_length = field_record_length(&record->record.fields[i]);
+            field_length = field_record_length(&buffer->record.fields[i]);
             if(field_length > max_field_lengths[i])
                 max_field_lengths[i] = field_length;
         }
@@ -149,31 +152,36 @@ void display_table_record_list(record_list_t *record_list) {
         printf("+");
     }
     printf("\n");
-int field_count = record->record.fields_count;
+    int field_count = record->record.fields_count;
     record = record_list->head;
     while (record != NULL)
     {
         
 
         printf("|");
+        //Add the number of space to the left of the value to align it
+
         for(int i=0; i<record->record.fields_count; i++)
         {
+            for(int j=0; j < max_field_lengths[i] - field_record_length(&record->record.fields[i]);j++){
+                printf(" ");
+            }
             switch (record->record.fields[i].field_type)
             {
                 case TYPE_INTEGER:
-                    printf(" %*lld |", max_field_lengths[i], record->record.fields[i].field_value.int_value);
+                    printf(" %lld |",  record->record.fields[i].field_value.int_value);
                     break;
                 case TYPE_FLOAT:
-                    printf(" %*f |", max_field_lengths[i], record->record.fields[i].field_value.float_value);
+                    printf(" %f |",  record->record.fields[i].field_value.float_value);
                     break;
                 case TYPE_TEXT:
-                    printf(" %*s |", max_field_lengths[i], record->record.fields[i].field_value.text_value);
+                    printf(" %s |",  record->record.fields[i].field_value.text_value);
                     break;
                 case TYPE_PRIMARY_KEY:
-                    printf(" %*lld |", max_field_lengths[i], record->record.fields[i].field_value.int_value);
+                    printf(" %lld |",  record->record.fields[i].field_value.primary_key_value);
                     break;
                 case TYPE_UNKNOWN:
-                    printf(" %*s |", max_field_lengths[i], record->record.fields[i].field_value.text_value);
+                    printf(" %s |",  record->record.fields[i].field_value.text_value);
                     break;
             }
            
