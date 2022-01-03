@@ -152,33 +152,36 @@ void execute_update(update_or_select_query_t *query) {
  */
 void execute_delete(delete_query_t *query) {
 
-    table_definition_t *table_definition = malloc(sizeof(table_definition_t));
-    char table_name[TEXT_LENGTH];
-    strcpy(table_name, query->table_name);
-    get_table_definition(query->table_name, table_definition);
-    filter_t *filter = malloc(sizeof(filter_t));
+    table_definition_t table_definition;
+    get_table_definition(query->table_name, &table_definition);
 
-    FILE *idx = open_index_file(table_name, "rb");
+    FILE *idx = open_index_file(query->table_name, "rb+");
 
     if (idx){
         index_record_t index_record;
         table_definition_t table_definitions;
         table_record_t record;
-        table_record_t result_record;
         uint8_t empty = 0;
 
-        get_table_definition(table_name, &table_definitions);
+        get_table_definition(query->table_name, &table_definitions);
 
         //read index to look through all active records
         while (fread(&index_record.is_active, sizeof(uint8_t), 1, idx) == 1) {
             if (index_record.is_active) {
-                fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
-                get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
 
-                if (is_matching_filter(&record, filter)) {
+                fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
+                get_table_record(query->table_name, index_record.record_offset, &table_definitions, &record);
+
+                if (is_matching_filter(&record, &query->where_clause)) {
+                    fseek(idx, -5, SEEK_CUR);
+
                     fwrite(&empty, sizeof(uint8_t), 1, idx);
+
+                    fseek(idx, 7, SEEK_CUR);
+                }else{
+                    fseek(idx, 3, SEEK_CUR);
                 }
-                fseek(idx, 3, SEEK_CUR);
+
             } else {
                 fseek(idx, 7, SEEK_CUR);
             }
@@ -186,8 +189,6 @@ void execute_delete(delete_query_t *query) {
 
         fclose(idx);
     }
-    free(filter);
-    free(table_definition);
 }
 
 /*!
