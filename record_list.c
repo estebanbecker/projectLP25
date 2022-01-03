@@ -114,6 +114,11 @@ void display_table_record_list(record_list_t *record_list) {
         printf("No records found\n");
         return;
     }
+
+    for(int i=0 ; i<buffer->record.fields_count; i++)
+    {
+        max_field_lengths[i]= strlen(record->record.fields->column_name);
+    }
     
     while (buffer != NULL)
     {
@@ -139,7 +144,7 @@ void display_table_record_list(record_list_t *record_list) {
 
     printf("|");
     for(int i=0; i<record->record.fields_count; i++)
-    {
+    {        
         printf(" %-*s |", max_field_lengths[i], record->record.fields[i].column_name);
     }
     printf("\n");
