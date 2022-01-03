@@ -52,25 +52,22 @@ void execute_create(create_query_t *query) {
 }
 
 void execute_insert(insert_query_t *query) {
-    chdir(query->table_name);
-    //insert_column(query);
-    add_row_to_table(query->table_name, &query->fields_values);
-    chdir("..");
+    add_row_to_table(&query->table_name, &query->fields_values);
 }
 
 void execute_select(update_or_select_query_t *query) {
     char table_name[TEXT_LENGTH];
-    chdir(query->table_name);
-    record_list_t *record = malloc(sizeof(record_list_t));
-    display_table_record_list(
-        get_filtered_records(
-            query->table_name, 
+        char cwd[4096];
+    record_list_t *record_list = malloc(sizeof(record_list_t));
+    
+    get_filtered_records(
+            &query->table_name, 
             &query->set_clause, 
-            &query->where_clause, 
-            record)
-        );
-    free(record);
-    chdir("..");
+            NULL,
+            record_list);
+            
+    display_table_record_list(record_list);
+    free(record_list);
 }
 
 /*!
@@ -155,7 +152,6 @@ void execute_update(update_or_select_query_t *query) {
  */
 void execute_delete(delete_query_t *query) {
 
-    chdir(query->table_name);
     table_definition_t *table_definition = malloc(sizeof(table_definition_t));
     char table_name[TEXT_LENGTH];
     strcpy(table_name, query->table_name);
@@ -192,7 +188,6 @@ void execute_delete(delete_query_t *query) {
     }
     free(filter);
     free(table_definition);
-    chdir("..");
 }
 
 /*!

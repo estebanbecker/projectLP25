@@ -249,9 +249,6 @@ void add_row_to_table(char *table_name, table_record_t *record) {
     index_record.record_length = compute_record_length(&table_definition);
     index_record.record_offset = find_first_free_record(table_name);
 
-    //create buffer, empty it and format it
-    char buffer[index_record.record_length];
-    strcpy(buffer, "");
 
     if (write_record(table_name, index_record.record_offset, &table_definition, record)){
         FILE *idx = open_index_file(table_name, "rb+");
@@ -457,7 +454,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
                 fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
                 get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
 
-                if (is_matching_filter(&record, filter)) {
+                //if (is_matching_filter(&record, filter)) {
                     //add values to required fields
                     for (int num_required_field = 0;
                          num_required_field < required_fields->fields_count; ++num_required_field) {
@@ -465,9 +462,9 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
                         result_record.fields_count = num_required_field;
                     }
                     result_record.fields_count++;
-
                     add_record(result, required_fields);
-                }
+                    printf("test");
+                //}
                 fseek(idx, 3, SEEK_CUR);
             } else {
                 fseek(idx, 7, SEEK_CUR);
@@ -477,7 +474,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
         fclose(idx);
     }
 
-    return result;
+    return &result;
 }
 
 /*!

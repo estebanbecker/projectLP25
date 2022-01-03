@@ -106,13 +106,13 @@ void display_table_record_list(record_list_t *record_list) {
 
     int max_field_lengths[MAX_FIELDS_COUNT]={0};
     record_list_node_t *record = record_list->head;
-
+    record_list_node_t *buffer = record;
     if(record_list->head == NULL){
         printf("No records found\n");
         return;
     }
     
-    while (record != NULL)
+    while (buffer != NULL)
     {
         for(int i=0; i<record->record.fields_count; i++)
         {
@@ -120,7 +120,10 @@ void display_table_record_list(record_list_t *record_list) {
             if(field_length > max_field_lengths[i])
                 max_field_lengths[i] = field_length;
         }
+        buffer = buffer->next;
     }
+
+    buffer = record;
 
     printf("+");
     for(int i=0; i<record->record.fields_count; i++)
@@ -146,10 +149,12 @@ void display_table_record_list(record_list_t *record_list) {
         printf("+");
     }
     printf("\n");
-
+int field_count = record->record.fields_count;
     record = record_list->head;
     while (record != NULL)
     {
+        
+
         printf("|");
         for(int i=0; i<record->record.fields_count; i++)
         {
@@ -176,9 +181,9 @@ void display_table_record_list(record_list_t *record_list) {
         printf("\n");
         record = record->next;
     }
-
+    
     printf("+");
-    for(int i=0; i<record->record.fields_count; i++)
+    for(int i=0; i<field_count; i++)
     {
         for(int j=0; j<max_field_lengths[i]+2; j++)
             printf("-");
