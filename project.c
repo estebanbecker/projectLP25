@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 
         if(query.query_type == QUERY_DROP_DB){
             printf("Database %s dropped\n", database_name);
-            printf("Bye!\n");
+            printf("Have a good day sir!\n");
             return 0;
         }
 
