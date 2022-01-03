@@ -585,6 +585,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
 
     //Get a where clause
     if(has_reached_sql_end(sql)){
+        result->query_content.select_query.where_clause.values.fields_count = 0;
         return result;
     }else if(get_keyword(sql, "where") != NULL){
         

@@ -369,7 +369,7 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
     //if filter is null
-    if (filter == NULL){
+    if (filter->values.fields_count == 0){
         return true;
     }
 
@@ -453,7 +453,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
             if (index_record.is_active) {
                 fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
                 get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
-                
+
                 if (is_matching_filter(&record, filter)) {
                     //add values to required fields
                     for (int num_required_field = 0;
