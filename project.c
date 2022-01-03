@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     if(database_path != NULL){
 
         if(chdir(database_path) == -1){
-            printf("Not a vlid directory\n");
+            printf("Not a valid directory\n");
             return 1;
         }
 
