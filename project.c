@@ -45,8 +45,10 @@ int main(int argc, char *argv[]) {
     }
     if(database_path != NULL){
 
-        printf("Error: database path is not valid\n");
-        return 1;
+        if(chdir(database_path) == -1){
+            printf("Not a vlid directory\n");
+            return 1;
+        }
 
     }
 
@@ -68,10 +70,11 @@ int main(int argc, char *argv[]) {
         printf("%s\n", buffer);
 
         if(parse(buffer, &query) == NULL) {
+            printf("Error: invalid query parsing\n");
             continue;
         }
         if(!check_query(&query)){
-            printf("Error: query is not valid\n");
+            printf("Error: query is not valid check\n");
             continue;
         }
 
