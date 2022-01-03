@@ -134,14 +134,24 @@ bool check_query_insert(insert_query_t *query) {
             for (int i = 0; i < result.fields_count; i++) {
                 strcpy(query->fields_values.fields[i].column_name , result.definitions[i].column_name);
             }
+            if(result.fields_count != query->fields_values.fields_count){
+                return false;
+            }
         }
     }else{
         for(int field = 0; field < query->fields_names.fields_count; field++){
             strcpy(query->fields_values.fields[field].column_name, query->fields_names.fields[field].field_value.text_value);
-            printf("Field %d %s\n", field, query->fields_names.fields[field].field_value.text_value);
+        }
+        if(query->fields_names.fields_count != query->fields_values.fields_count){
+            return false;
         }
     }
     if(get_table_definition(query->table_name, &result)!=NULL){
+
+        if(check_value_types(&query->fields_values, &result) == true){
+            return true;
+        }
+        if(check_value_types(&query->fields_values, &result) == true){
             if(check_fields_list(&query->fields_values, &result) == false){
                 return false;
             }
@@ -149,6 +159,7 @@ bool check_query_insert(insert_query_t *query) {
                 return false;
             }
         return true;
+        }
     }
     return false;
 }
