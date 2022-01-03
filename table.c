@@ -438,6 +438,8 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
  * @return a pointer to the first element of the resulting linked list. Shall be freed by the calling function
  */
 record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result) {
+    clear_list(result);
+
     FILE *idx = open_index_file(table_name, "rb");
 
     if (idx){
