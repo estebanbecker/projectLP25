@@ -462,8 +462,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
                         result_record.fields_count = num_required_field;
                     }
                     result_record.fields_count++;
-                    add_record(result, &record);
-                    printf("test");
+                    add_record(result, &result_record);
                 //}
                 fseek(idx, 3, SEEK_CUR);
             } else {
