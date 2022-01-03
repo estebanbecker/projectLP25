@@ -63,7 +63,7 @@ void execute_select(update_or_select_query_t *query) {
     get_filtered_records(
             query->table_name,
             &query->set_clause, 
-            NULL,
+            &query->where_clause,
             record_list);
             
     display_table_record_list(record_list);
