@@ -28,11 +28,11 @@ void execute(query_result_t *query) {
         case QUERY_SELECT:
             execute_select(&query->query_content.select_query); 
             break;
-            /*
+
         case QUERY_UPDATE:
-            execute_update(&query);
+            execute_update(&query->query_content.update_query);
             break;
-            */
+
         case QUERY_DELETE:
             execute_delete(&query->query_content.delete_query);
             break;
@@ -74,65 +74,36 @@ void execute_select(update_or_select_query_t *query) {
  * @brief function execute_update updates records in the database
  * @param query query to be executed
  */
-/*
 void execute_update(update_or_select_query_t *query) {
-    chdir(query->table_name);
-    table_definition_t *table_definition = malloc(sizeof(table_definition_t));
-    char table_name[TEXT_LENGTH];
-    strcpy(table_name, query->table_name);
-    get_table_definition(query->table_name, table_definition);
-    filter_t *filter = malloc(sizeof(filter_t));
-
-    FILE *idx = open_index_file(table_name, "rb");
+    FILE *idx = open_index_file(query->table_name, "rb");
 
     if (idx){
         index_record_t index_record;
-        table_definition_t table_definitions;
         table_record_t record;
-        table_record_t result_record;
-        uint8_t empty = 0;
 
-        get_table_definition(table_name, &table_definitions);
+        table_definition_t table_definition;
+        get_table_definition(query->table_name, &table_definition);
 
         //read index to look through all active records
         while (fread(&index_record.is_active, sizeof(uint8_t), 1, idx) == 1) {
             if (index_record.is_active) {
                 fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
-                get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
-
-                if (is_matching_filter(&record, filter)) {
-                    for (int i = 0; i < record.fields_count; i++)
-                    {
-                        if(find_field_in_table_record()){
-                            record.fields[i]
-                        }
-                    }
-                    
-                    
-                    //write said record
-                    if (write_record(table_name, index_record.record_offset, &table_definition, &record)){
-                        FILE *idx = open_index_file(table_name, "rb+");
-                        if (idx) {
-                            uint16_t last_size;
-
-                            fseek(idx, -3, SEEK_END);
-                            fread(&last_size, sizeof(uint16_t), 1, idx);
-
-                            //complete if new record was created
-                            if (last_size == 0) {
-                                fseek(idx, -6, SEEK_CUR);
-                                fwrite(&index_record.record_offset, sizeof(uint32_t), 1, idx);
-                                fwrite(&index_record.record_length, sizeof(uint16_t), 1, idx);
-                            }
-                            fclose(idx);
-                        }else{
-                            printf("ERROR: could not open index file\n");
-                        }
-                    }else {
-                        printf("ERROR: could not write in data\n");
-                    }
-                }
                 fseek(idx, 3, SEEK_CUR);
+
+                get_table_record(query->table_name, index_record.record_offset, &table_definition, &record);
+
+                if (is_matching_filter(&record, &query->where_clause)) {
+
+                    for (int field_set = 0; field_set < query->set_clause.fields_count; ++field_set) {
+                        for (int field_record = 0; field_record < record.fields_count; ++field_record) {
+                            if (strcmp(query->set_clause.fields[field_set].column_name, record.fields[field_record].column_name) == 0){
+                                record.fields[field_record] = query->set_clause.fields[field_set];
+                            }
+                        }
+                    }
+                    write_record(query->table_name, index_record.record_offset, &table_definition, &record);
+
+                }
             } else {
                 fseek(idx, 7, SEEK_CUR);
             }
@@ -140,11 +111,8 @@ void execute_update(update_or_select_query_t *query) {
 
         fclose(idx);
     }
-    free(filter);
-    free(table_definition);
-    chdir("..");
 }
-*/
+
 
 /*!
  * @brief function execute_delete deletes records in a database

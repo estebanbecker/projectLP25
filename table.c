@@ -283,7 +283,7 @@ void add_row_to_table(char *table_name, table_record_t *record) {
  */
 bool write_record(char *table_name, uint32_t offset, table_definition_t *table_definition, table_record_t *record) {
 
-    FILE *data = open_content_file(table_name, "ab");
+    FILE *data = open_content_file(table_name, "rb+");
     if (data){
         fseek(data, offset, SEEK_SET);
         field_record_t *record_def;
