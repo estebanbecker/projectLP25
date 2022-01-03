@@ -442,10 +442,10 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
 
     if (idx){
         index_record_t index_record;
-        table_definition_t table_definitions;
         table_record_t record;
         table_record_t result_record;
 
+        table_definition_t table_definitions;
         get_table_definition(table_name, &table_definitions);
 
         //read index to look through all active records
@@ -453,8 +453,8 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
             if (index_record.is_active) {
                 fread(&index_record.record_offset, sizeof(uint32_t), 1, idx);
                 get_table_record(table_name, index_record.record_offset, &table_definitions, &record);
-
-                //if (is_matching_filter(&record, filter)) {
+                
+                if (is_matching_filter(&record, filter)) {
                     //add values to required fields
                     for (int num_required_field = 0;
                          num_required_field < required_fields->fields_count; ++num_required_field) {
@@ -463,7 +463,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
                     }
                     result_record.fields_count++;
                     add_record(result, &result_record);
-                //}
+                }
                 fseek(idx, 3, SEEK_CUR);
             } else {
                 fseek(idx, 7, SEEK_CUR);
@@ -473,7 +473,7 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
         fclose(idx);
     }
 
-    return &result;
+    return result;
 }
 
 /*!

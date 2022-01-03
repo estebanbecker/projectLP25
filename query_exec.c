@@ -52,7 +52,7 @@ void execute_create(create_query_t *query) {
 }
 
 void execute_insert(insert_query_t *query) {
-    add_row_to_table(&query->table_name, &query->fields_values);
+    add_row_to_table(query->table_name, &query->fields_values);
 }
 
 void execute_select(update_or_select_query_t *query) {
@@ -61,7 +61,7 @@ void execute_select(update_or_select_query_t *query) {
     record_list_t *record_list = malloc(sizeof(record_list_t));
     
     get_filtered_records(
-            &query->table_name, 
+            query->table_name,
             &query->set_clause, 
             NULL,
             record_list);
