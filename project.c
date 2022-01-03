@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (database_name == NULL) {
+    /*if (database_name == NULL) {
         printf("Usage: %s -d database_name -l database_path\n", argv[0]);
         return 1;
     }
@@ -50,7 +50,10 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-    }
+    }*/
+    
+    database_name = malloc(sizeof(char) * (10));
+    strcpy(database_name, "test");
 
     create_db_directory(database_name);
     chdir(database_name);
@@ -70,11 +73,10 @@ int main(int argc, char *argv[]) {
         printf("%s\n", buffer);
 
         if(parse(buffer, &query) == NULL) {
-            printf("Error: invalid query parsing\n");
             continue;
         }
         if(!check_query(&query)){
-            printf("Error: query is not valid check\n");
+            printf("Error: query is not valid\n");
             continue;
         }
 

@@ -104,6 +104,8 @@ int field_record_length(field_record_t *field_record) {
  */
 void display_table_record_list(record_list_t *record_list) {
 
+    printf("\n");
+
     int max_field_lengths[MAX_FIELDS_COUNT]={0};
     record_list_node_t *record = record_list->head;
     record_list_node_t *buffer = record;
