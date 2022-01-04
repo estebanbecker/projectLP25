@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (database_name == NULL) {
+    /*if (database_name == NULL) {
         printf("Usage: %s -d database_name -l database_path\n", argv[0]);
         return 1;
     }
@@ -50,7 +50,11 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-    }
+    }*/
+
+    database_name=malloc(sizeof(char)*(15));
+    strcpy(database_name,"test");
+
     
 
 

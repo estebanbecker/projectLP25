@@ -117,7 +117,7 @@ void display_table_record_list(record_list_t *record_list) {
 
     for(int i=0 ; i<buffer->record.fields_count; i++)
     {
-        max_field_lengths[i]= strlen(record->record.fields->column_name);
+        max_field_lengths[i]= strlen(record->record.fields[i].column_name);
     }
     
     while (buffer != NULL)
