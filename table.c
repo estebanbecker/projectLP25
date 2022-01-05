@@ -4,6 +4,7 @@
 
 #include "table.h"
 #include "utils.h"
+#include "record_list.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

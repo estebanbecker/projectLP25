@@ -92,7 +92,7 @@ bool check_query_select(update_or_select_query_t *query) {
  */
 bool check_query_update(update_or_select_query_t *query) {
     table_definition_t result;
-    if(get_table_definition(&query->table_name, &result)!=NULL){ //check existence of table from request        
+    if(get_table_definition(&query->table_name[0], &result)!=NULL){ //check existence of table from request        
         if(check_value_types(&query->set_clause, &result) == true){
             if(check_value_types(&query->where_clause.values, &result) == true){
                 return true;

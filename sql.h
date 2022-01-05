@@ -64,4 +64,15 @@ query_result_t *parse_delete(char *sql, query_result_t *result);
 query_result_t *parse_drop_db(char *sql, query_result_t *result);
 query_result_t *parse_drop_table(char *sql, query_result_t *result);
 
+char *get_sep_space(char *sql);
+char *get_sep_space_and_char(char *sql, char c);
+char *get_keyword(char *sql, char *keyword);
+char *get_field_name(char *sql, char *field_name);
+bool has_reached_sql_end(char *sql);
+char *parse_fields_or_values_list(char *sql, table_record_t *result);
+char *parse_create_fields_list(char *sql, table_definition_t *result);
+char *parse_equality(char *sql, field_record_t *equality);
+char *parse_set_clause(char *sql, table_record_t *result);
+char *parse_where_clause(char *sql, filter_t *filter);
+
 #endif //_SQL_H

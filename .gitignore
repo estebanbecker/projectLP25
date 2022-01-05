@@ -18,3 +18,4 @@ CMakeLists.txt
 build
 main.cpp
 settings.json
+test

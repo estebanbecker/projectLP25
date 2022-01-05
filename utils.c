@@ -4,7 +4,10 @@
 
 #include "utils.h"
 
+#include <limits.h>
+
 #include <dirent.h>
+#include <stdio.h>
 
 /*!
  *  \brief make_full_path concatenates path and basename and returns the result
@@ -15,7 +18,7 @@
  *  \return a pointer to the full path. Its content must be freed by make_full_path caller.
  */
 char *make_full_path(char *path, char *basename) {
-    
+
     if(basename){
         if(path){
 
