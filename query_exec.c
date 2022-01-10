@@ -68,15 +68,15 @@ void execute_insert(insert_query_t *query) {
 }
 
 void execute_select(update_or_select_query_t *query) {
-    char table_name[TEXT_LENGTH];
-        char cwd[4096];
-    record_list_t *record_list = malloc(sizeof(record_list_t));
+
+   
+    record_list_t record_list;
     
     get_filtered_records(
             query->table_name,
             &query->set_clause, 
             &query->where_clause,
-            record_list);
+            &record_list);
             
     display_table_record_list(record_list);
     free(record_list);
