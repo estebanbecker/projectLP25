@@ -314,6 +314,35 @@ bool write_record(char *table_name, uint32_t offset, table_definition_t *table_d
 }
 
 /*!
+ * @brief function format_row prepares the buffer to be written to the content file
+ * @param buffer the buffer where the row content is prepared
+ * @param table_definition the table definition for fields ordering and formatting
+ * @param record the record to write
+ * @return a pointer to buffer in case of success, NULL else.
+ */
+char *format_row(char *buffer, table_definition_t *table_definition, table_record_t *record) {
+    for (int field = 0; field < table_definition->fields_count; ++field) {
+        field_record_t *field_record = find_field_in_table_record(table_definition->definitions[field].column_name, record);
+        switch (field_record->field_type) {
+            case TYPE_PRIMARY_KEY:
+                sprintf(buffer, "%s%8llo", buffer, field_record->field_value.primary_key_value);
+                break;
+            case TYPE_INTEGER:
+                sprintf(buffer, "%s%8llo", buffer, field_record->field_value.int_value);
+                break;
+            case TYPE_FLOAT:
+                sprintf(buffer, "%s%8of", buffer, field_record->field_value.float_value);
+                break;
+            case TYPE_TEXT:
+                sprintf(buffer, "%s%s", buffer, field_record->field_value.text_value);
+                break;
+        }
+
+    }
+    return buffer;
+}
+
+/*!
  * @brief function update_key updates the key value in the key file. Key value is updated if and only if the new value
  * if higher than the stored value. The value sent to the function is the last value inserted into the table, so the
  * function must increment it before comparing to the key file content.
