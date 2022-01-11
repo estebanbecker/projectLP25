@@ -78,8 +78,7 @@ void execute_select(update_or_select_query_t *query) {
             &query->where_clause,
             &record_list);
             
-    display_table_record_list(record_list);
-    free(record_list);
+    display_table_record_list(&record_list);
 }
 
 /*!
