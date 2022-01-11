@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
                 return 1;
         }
     }
-
+    
     if (database_name == NULL) {
         printf("Usage: %s -d database_name -l database_path\n", argv[0]);
         return 1;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    
+
 
 
     create_db_directory(database_name);
